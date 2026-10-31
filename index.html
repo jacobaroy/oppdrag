@@ -286,10 +286,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 <section class="panel onb" id="login" hidden>
   <h1>Logg inn</h1>
-  <p>Skriv inn e-posten din, så får du ei innloggingslenke på mail. Du treng ikkje passord.</p>
+  <p id="l-intro">Skriv inn e-posten din, så får du ein kode på mail. Du treng ikkje passord.</p>
   <form id="loginForm" style="display:flex;flex-direction:column;gap:12px">
-    <label class="fld"><span>E-post</span><input id="l-email" type="email" required autocomplete="email" placeholder="namn@aroyfilm.no"></label>
-    <button class="btn primary" type="submit" id="l-btn" style="justify-content:center">Send innloggingslenke</button>
+    <label class="fld"><span>E-post</span><input id="l-email" type="email" required autocomplete="email" inputmode="email" placeholder="namn@aroyfilm.no"></label>
+    <button class="btn primary" type="submit" id="l-btn" style="justify-content:center">Send kode</button>
+  </form>
+  <form id="codeForm" hidden style="display:flex;flex-direction:column;gap:12px">
+    <label class="fld"><span>Kode frå e-posten</span><input id="l-code" required autocomplete="one-time-code" inputmode="numeric" maxlength="12" placeholder="123456" style="font-size:22px;letter-spacing:.3em;text-align:center"></label>
+    <button class="btn primary" type="submit" id="c-btn" style="justify-content:center">Logg inn</button>
+    <button class="clearf" type="button" id="l-back" style="align-self:center">Bruk ei anna e-postadresse</button>
   </form>
   <p class="hint" id="l-msg" hidden></p>
 </section>
@@ -1117,13 +1122,28 @@ button,input,select,textarea{font:inherit;color:inherit}
 
   // ---- oppstart ----
   function fatal(t){ $('fatal').textContent=t; $('fatal').hidden=false; $('main').hidden=true; }
+  // Innlogging med kode på e-post. iPhone fyller inn koden frå Mail av seg sjølv (one-time-code).
+  // Lenka i mailen fungerer òg, men koden er betre i appen på heimeskjermen.
+  function lmsg(t){ $('l-msg').textContent=t||''; $('l-msg').hidden=!t; }
   $('loginForm').addEventListener('submit',async function(e){
     e.preventDefault(); var em=$('l-email').value.trim(); if(!em) return;
-    $('l-btn').disabled=true;
+    $('l-btn').disabled=true; lmsg('');
     var r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}});
-    $('l-btn').disabled=false; $('l-msg').hidden=false;
-    $('l-msg').textContent = r.error ? 'Klarte ikkje sende lenka. Sjekk e-posten og prøv igjen.' : 'Sjekk e-posten din og trykk på lenka for å logge inn.';
+    $('l-btn').disabled=false;
+    if(r.error){ lmsg(/rate|seconds/i.test(r.error.message||'')?'Vent litt før du ber om ein ny kode.':'Klarte ikkje sende koden. Sjekk e-posten og prøv igjen.'); return; }
+    $('loginForm').hidden=true; $('codeForm').hidden=false;
+    $('l-intro').textContent='Vi har sendt ein kode til '+em+'. Skriv han inn her.';
+    setTimeout(function(){ $('l-code').focus(); },50);
   });
+  $('codeForm').addEventListener('submit',async function(e){
+    e.preventDefault(); var em=$('l-email').value.trim(), code=$('l-code').value.replace(/\D/g,''); if(!code) return;
+    $('c-btn').disabled=true; lmsg('');
+    var r=await sb.auth.verifyOtp({email:em,token:code,type:'email'});
+    $('c-btn').disabled=false;
+    if(r.error){ lmsg('Koden stemmer ikkje eller er gått ut. Prøv igjen, eller be om ein ny.'); $('l-code').select(); return; }
+  });
+  $('l-code').addEventListener('input',function(){ var v=this.value.replace(/\D/g,''); if(v.length>=6&&v.length===(+this.getAttribute('data-len')||6)) $('codeForm').requestSubmit(); });
+  $('l-back').addEventListener('click',function(){ $('codeForm').hidden=true; $('loginForm').hidden=false; $('l-code').value=''; lmsg(''); $('l-intro').textContent='Skriv inn e-posten din, så får du ein kode på mail. Du treng ikkje passord.'; });
   // Ny partnar: skriv namn og område, be om tilgang, og vent til Jacob godkjenner.
   function askAccess(){
     var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Jacob har fått beskjed. Sida opnar seg av seg sjølv når du har fått tilgang.'; $('na-form').hidden=true;

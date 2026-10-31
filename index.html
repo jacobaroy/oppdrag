@@ -252,6 +252,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Tomme dagar i vekeoversikta: ingen tekst, berre ein «+» når du peikar. Mindre støy. */
 .capc.free{color:transparent;border-color:transparent;min-height:26px}
 .capc.free:hover,.capc.free:focus-visible{color:var(--muted);border-color:var(--line)}
+.perks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.perks li{display:flex;flex-direction:column;padding-left:22px;position:relative}
+.perks li::before{content:"✓";position:absolute;left:0;top:0;color:var(--s-fakturert);font-weight:800}
+.perks b{font-weight:600}.perks span{color:var(--muted);font-size:13px}
+.welcome{border-color:var(--ink)}.welcome .wb{padding:16px;display:flex;flex-direction:column;gap:14px}
+.welcome ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}.welcome ol li span{color:var(--muted);display:block;font-size:13px}
+.welcome .wf{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:14px}
 .todo li.req{align-items:center;flex-wrap:wrap;cursor:default}.todo li.req:hover{background:transparent}
 .todo .reqa{margin-left:auto;display:flex;gap:6px}
 .foot{text-align:center;color:var(--muted);font-size:13px;padding:0 20px 40px}.foot .clearf{font-size:13px;margin-left:2px;color:var(--ink)}
@@ -302,12 +309,21 @@ button,input,select,textarea{font:inherit;color:inherit}
 <section class="panel onb" id="noaccess" hidden>
   <h1 id="na-title">Ingen tilgang enno</h1>
   <p id="na-text">Du er logga inn, men har ikkje fått tilgang. Be Jacob invitere deg.</p>
-  <div id="na-form" hidden style="display:flex;flex-direction:column;gap:16px">
+  <ul class="perks" id="na-perks" hidden>
+    <li><b>Alle oppdraga dine på éin stad</b><span>Kva, kvar, når og kva du får betalt</span></li>
+    <li><b>Lever video med éi lenke</b><span>Frame.io-lenka rett inn på jobben</span></li>
+    <li><b>Fakturagrunnlaget ferdig kvar månad</b><span>Kopier og send, ferdig</span></li>
+  </ul>
+  <div id="na-form" hidden style="display:flex;flex-direction:column;gap:14px">
     <label class="fld"><span>Namn</span><input id="na-namn" autocomplete="name"></label>
+    <label class="fld"><span>Telefon</span><input id="na-tlf" type="tel" autocomplete="tel" inputmode="tel" placeholder="900 00 000"></label>
     <div class="fld"><span>Område</span><div class="seg full" role="group">
       <button type="button" data-oomr="Oslo" aria-pressed="false">Oslo</button>
       <button type="button" data-oomr="Bergen" aria-pressed="false">Bergen</button>
       <button type="button" data-oomr="Sogn" aria-pressed="false">Sogn</button></div></div>
+    <div class="two"><label class="fld"><span>Firma <span class="hint">valfritt</span></span><input id="na-firma" autocomplete="organization"></label>
+      <label class="fld"><span>Org.nr. <span class="hint">valfritt</span></span><input id="na-orgnr" inputmode="numeric" placeholder="123 456 789"></label></div>
+    <label class="chk2"><input type="checkbox" id="na-mva" checked> <span>Eg er mva-registrert</span></label>
     <button class="btn primary" type="button" id="na-send" style="justify-content:center">Be om tilgang</button>
     <p class="err" id="na-err" hidden></p>
   </div>
@@ -320,6 +336,26 @@ button,input,select,textarea{font:inherit;color:inherit}
   <section class="panel" id="offerPanel" hidden>
     <div class="ph"><h2>Nye oppdrag<span class="sub" id="offerCount"></span></h2></div>
     <div id="offers" class="offers"></div>
+  </section>
+  <section class="panel welcome" id="welcomePanel" hidden>
+    <div class="ph"><h2 id="wTitle">Velkomen</h2></div>
+    <div class="wb">
+      <ol>
+        <li><b>Nye jobbar dukkar opp øvst</b><span>Trykk «Ta jobben» for å få han.</span></li>
+        <li><b>«Dette må du gjere» viser kva som hastar</b><span>Opptak i dag, video som skal leverast og rettingar.</span></li>
+        <li><b>Lever med Frame.io-lenke</b><span>Opne jobben, lim inn lenka og trykk Lagre.</span></li>
+        <li><b>Ikkje ledig?</b><span>Trykk «Merk meg opptatt», så blir du ikkje booka.</span></li>
+      </ol>
+      <p class="hint" style="margin:0;font-size:13px">Tips: Legg tavla til på heimeskjermen. På iPhone: del-knappen i Safari, så «Legg til på Hjem-skjerm».</p>
+      <div class="wf" id="wForm" hidden>
+        <b style="font-weight:600">Fullfør profilen din</b>
+        <label class="fld"><span>Telefon</span><input id="w-tlf" type="tel" autocomplete="tel" inputmode="tel" placeholder="900 00 000"></label>
+        <div class="two"><label class="fld"><span>Firma <span class="hint">valfritt</span></span><input id="w-firma" autocomplete="organization"></label>
+          <label class="fld"><span>Org.nr. <span class="hint">valfritt</span></span><input id="w-orgnr" inputmode="numeric"></label></div>
+        <label class="chk2"><input type="checkbox" id="w-mva" checked> <span>Eg er mva-registrert</span></label>
+      </div>
+      <div><button class="btn primary" type="button" id="w-ok">Kom i gang</button></div>
+    </div>
   </section>
   <section class="panel" id="todoPanel">
     <div class="ph"><h2 id="todoTitle">Treng deg</h2></div>
@@ -708,7 +744,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     });
     // Nye som har bede om tilgang, øvst hos Jacob.
     var reqs = isOwner ? allProfiles.filter(function(p){return p.rolle==='ingen'&&p.onskjer_tilgang}) : [];
-    var rh = reqs.map(function(p){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>'+esc(p.namn||p.email)+' vil bli partnar</b><span>'+esc([p.omrade,p.email].filter(Boolean).join(' · '))+'</span></div>'+
+    var rh = reqs.map(function(p){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>'+esc(p.namn||p.email)+' vil bli partnar</b><span>'+esc([p.omrade,p.telefon,p.firma,p.email].filter(Boolean).join(' · '))+'</span></div>'+
       '<div class="reqa"><button class="btn primary ubtn" type="button" data-uact="gi" data-id="'+esc(p.id)+'">Godkjenn</button><button class="btn ubtn" type="button" data-uact="avvis" data-id="'+esc(p.id)+'">Avvis</button></div></li>'; }).join('');
     if(rh&&!list.length){ $('todo').innerHTML=rh; return; }
     $('todo').innerHTML = rh + (list.length ? list.map(function(x){var o=x.it.o;return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div></li>'}).join('')
@@ -1083,7 +1119,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     list.forEach(function(x){
       if(x.p){ var p=x.p, self=p.id===me;
         var st = p.rolle==='ingen'?'<span class="pill2 off">Ingen tilgang</span>':(p.aktiv?'<span class="pill2 on">Aktiv</span>':'<span class="pill2 off">På pause</span>');
-        h+='<tr><td><b style="font-weight:600">'+esc(p.namn||'Utan namn')+(self?' <span class="hint">(deg)</span>':'')+'</b><br><span class="tag">'+esc(p.email)+'</span></td>'+
+        h+='<tr><td><b style="font-weight:600">'+esc(p.namn||'Utan namn')+(self?' <span class="hint">(deg)</span>':'')+'</b><br><span class="tag">'+esc([p.email,p.telefon,p.firma].filter(Boolean).join(' · '))+'</span></td>'+
           '<td>'+rol(p.rolle,'data-urolle="'+p.id+'"',self)+'</td><td>'+omr(p.omrade,'data-uomr="'+p.id+'"',false)+'</td><td><button class="pill2 '+(p.mva_registrert!==false?'on':'off')+'" data-uact="mva" data-id="'+p.id+'" type="button">'+(p.mva_registrert!==false?'Registrert':'Ikkje registrert')+'</button></td><td>'+st+'</td><td class="n">'+(cnt[p.id]||0)+'</td>'+
           '<td style="text-align:right;white-space:nowrap">'+((p.rolle!=='ingen'&&!self)?'<button class="btn ubtn" data-pv="'+p.id+'" style="margin-right:6px">Sjå som</button>':'')+(self?'':(p.rolle==='ingen'?'<button class="btn ubtn" data-uact="gi" data-id="'+p.id+'">Gi tilgang</button>':'<button class="btn ubtn" data-uact="'+(p.aktiv?'pause':'aktiver')+'" data-id="'+p.id+'">'+(p.aktiv?'Set på pause':'Aktiver')+'</button>'))+'</td></tr>';
       } else { var i=x.inv;
@@ -1146,19 +1182,35 @@ button,input,select,textarea{font:inherit;color:inherit}
   $('l-back').addEventListener('click',function(){ $('codeForm').hidden=true; $('loginForm').hidden=false; $('l-code').value=''; lmsg(''); $('l-intro').textContent='Skriv inn e-posten din, så får du ein kode på mail. Du treng ikkje passord.'; });
   // Ny partnar: skriv namn og område, be om tilgang, og vent til Jacob godkjenner.
   function askAccess(){
-    var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Jacob har fått beskjed. Sida opnar seg av seg sjølv når du har fått tilgang.'; $('na-form').hidden=true;
+    var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Jacob har fått beskjed og godkjenner deg så snart han kan. Du treng ikkje gjere noko meir. Sida opnar seg av seg sjølv når du er godkjend.'; $('na-form').hidden=true; $('na-perks').hidden=true;
       setInterval(async function(){ var r=await sb.from('profiles').select('rolle,aktiv').eq('id',me).maybeSingle(); if(r.data&&r.data.rolle!=='ingen'&&r.data.aktiv) location.reload(); },15000); };
     if(profile.onskjer_tilgang){ waiting(); return; }
-    $('na-title').textContent='Bli partnar'; $('na-text').textContent='Skriv namnet ditt og vel området du jobbar i. Jacob får beskjed og godkjenner deg.';
-    $('na-namn').value=profile.namn||''; $('na-form').hidden=false;
+    $('na-title').textContent='Bli partnar hos Aroy Film'; $('na-text').textContent='Oppdragstavla er der du får jobbar frå Aroy Film, leverer video og finn fakturagrunnlaget ditt.';
+    $('na-perks').hidden=false; $('na-namn').value=profile.namn||''; $('na-form').hidden=false;
     $('na-send').addEventListener('click',async function(){
-      var namn=$('na-namn').value.trim(), sel=document.querySelector('#na-form [data-oomr][aria-pressed="true"]');
-      if(!namn||!sel){ $('na-err').textContent='Fyll inn namn og vel område.'; $('na-err').hidden=false; return; }
+      var namn=$('na-namn').value.trim(), tlf=$('na-tlf').value.trim(), sel=document.querySelector('#na-form [data-oomr][aria-pressed="true"]');
+      if(!namn||!tlf||!sel){ $('na-err').textContent='Fyll inn namn og telefon, og vel område.'; $('na-err').hidden=false; return; }
       $('na-send').disabled=true;
-      var r=await sb.rpc('be_om_tilgang',{p_namn:namn,p_omrade:sel.getAttribute('data-oomr')});
+      var r=await sb.rpc('be_om_tilgang',{p_namn:namn,p_omrade:sel.getAttribute('data-oomr'),p_telefon:tlf,p_firma:$('na-firma').value.trim(),p_orgnr:$('na-orgnr').value.trim(),p_mva:$('na-mva').checked});
       $('na-send').disabled=false;
       if(r.error||!r.data){ $('na-err').textContent='Klarte ikkje sende. Prøv igjen.'; $('na-err').hidden=false; return; }
       waiting();
+    });
+  }
+  // Første gong ein partnar er inne: kort forklaring, og kontaktinfo om ho manglar. Blir ikkje vist att.
+  function welcome(){
+    var key='aroy-velkomen-'+me, seen=false; try{ seen=!!localStorage.getItem(key); }catch(e){}
+    if(isOwner||PV||seen) return;
+    $('wTitle').textContent='Velkomen'+(profile.namn?', '+profile.namn.split(' ')[0]:'')+'!';
+    var need=!profile.telefon; $('wForm').hidden=!need;
+    if(need){ $('w-firma').value=profile.firma||''; $('w-orgnr').value=profile.orgnr||''; $('w-mva').checked=profile.mva_registrert!==false; }
+    $('main').insertBefore($('welcomePanel'),$('offerPanel')); $('welcomePanel').hidden=false;
+    $('w-ok').addEventListener('click',async function(){
+      if(need){ var tlf=$('w-tlf').value.trim(); if(!tlf){ $('w-tlf').focus(); toast('Skriv inn telefonnummeret ditt'); return; }
+        var r=await sb.rpc('min_profil',{p_telefon:tlf,p_firma:$('w-firma').value.trim(),p_orgnr:$('w-orgnr').value.trim(),p_mva:$('w-mva').checked});
+        if(r.error){ toast('Klarte ikkje lagre. Prøv igjen.'); return; } profile.telefon=tlf; }
+      try{ localStorage.setItem(key,'1'); }catch(e){}
+      $('welcomePanel').hidden=true; window.scrollTo(0,0);
     });
   }
   async function start(session){
@@ -1177,6 +1229,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('footWho').textContent=myEmail; $('foot').hidden=false;
     db=sb;
     await loadAll();
+    welcome();
     sb.channel('tavle').on('postgres_changes',{event:'*',schema:'public',table:'oppdrag'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'opptatt'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},reload)

@@ -928,6 +928,21 @@ button,input,select,textarea{font:inherit;color:inherit}
     warnOK=false; $('saveBtn').textContent='Lagre';
     if(c.length){ w.innerHTML='<b>Mogleg dobbelbooking.</b> '+esc(isOwner?'Fotografen har':'Du har')+' allereie:<br>'+c.map(esc).join('<br>'); w.hidden=false; } else w.hidden=true;
     return c; }
+  // Enkel levering for partnaren: berre lenka og éin knapp.
+  function openDeliver(key){
+    var it=find(key); if(!it) return; var o=it.o, ret=o.status==='retting';
+    mode='lev'; editKey=key; warnOK=false;
+    $('dtitle').textContent=ret?'Lever ny versjon':'Lever video';
+    $('dbody').innerHTML='<div><b style="font-size:17px;display:block">'+esc(o.adresse||'Oppdrag')+'</b><span class="tag">'+esc([o.kunde,o.type,fmtDays(o)].filter(function(x){return x&&x!=='–'}).join(' · '))+'</span></div>'+
+      (ret?'<div class="warn"><b>Kunden vil ha rettingar.</b>'+(o.notat?'<br>'+esc(o.notat).replace(/\n/g,'<br>'):' Sjå notatet frå Jacob, eller ta kontakt.')+'</div>':'')+
+      '<label class="fld big"><span>Lim inn Frame.io-lenka</span><input type="text" id="l-lenke" inputmode="url" autocomplete="off" placeholder="https://f.io/…"></label>'+
+      (o.lenke&&ret?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Førre versjon ↗</a>':'')+
+      '<p class="hint" style="margin:0;font-size:13px">Når du trykkjer «Lever video», får Jacob beskjed på tavla. Du treng ikkje sende noko anna.</p>'+
+      '<button type="button" class="clearf" data-openfull="'+esc(key)+'" style="align-self:flex-start">Opne heile jobben</button>';
+    $('saveBtn').textContent='Lever video'; $('saveBtn').hidden=false; $('delBtn').hidden=true;
+    $('scrim').hidden=false; $('drawer').hidden=false;
+    setTimeout(function(){ $('l-lenke').focus(); },30);
+  }
   function openBlock(key){
     mode='blk'; editKey=key||null;
     var b=key?blockList().find(function(x){return x.key===key}):null;
@@ -1016,6 +1031,13 @@ button,input,select,textarea{font:inherit;color:inherit}
       try{ if(editKey) await run(sb.from('opptatt').update(bo).eq('id',editKey)); else await run(sb.from('opptatt').insert(bo)); closeDrawer(); toast('Merka som opptatt'); reload(); }catch(err){ toast(writeErr(err)); }
       return;
     }
+    if(mode==='lev'){
+      var ln=$('l-lenke').value.trim();
+      if(!/^https?:\/\/\S+\.\S+/.test(ln)){ $('l-lenke').focus(); toast('Lim inn heile lenka, til dømes https://f.io/…'); return; }
+      try{ await run(sb.from('oppdrag').update({lenke:ln,status:'levert',retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',editKey));
+        closeDrawer(); toast('Video levert. Jacob får beskjed på tavla'); reload(); }catch(err){ toast(writeErr(err)); }
+      return;
+    }
     if(!warnOK && checkConflict().length){ warnOK=true; $('saveBtn').textContent='Lagre likevel'; $('f-warn').scrollIntoView({block:'center',behavior:'smooth'}); return; }
     var g=function(f){var el=$('f-'+f);return el?el.value.trim():''};
     var it=editKey?find(editKey):null;
@@ -1101,7 +1123,8 @@ button,input,select,textarea{font:inherit;color:inherit}
     if((b=t.closest('[data-addday]'))){ openDrawer(null,{dato:b.getAttribute('data-addday')}); return; }
     if((b=t.closest('[data-addrow]'))){ var last=[].slice.call(document.querySelectorAll('#f-days .d-dato')).pop(), nd=''; if(last&&last.value){ var q=last.value.split('-'), x=new Date(+q[0],+q[1]-1,+q[2]+1); nd=iso(x.getFullYear(),x.getMonth(),x.getDate()); } $('f-days').insertAdjacentHTML('beforeend',dayRow({dato:nd,tid:''})); return; }
     if((b=t.closest('[data-delrow]'))){ var rows=document.querySelectorAll('#f-days .dayrow'); if(rows.length>1) b.closest('.dayrow').remove(); else { b.closest('.dayrow').querySelector('.d-dato').value=''; b.closest('.dayrow').querySelector('.d-tid').value=''; } return; }
-    if((b=t.closest('[data-lever]'))){ openDrawer(b.getAttribute('data-lever'),null,true); return; }
+    if((b=t.closest('[data-lever]'))){ openDeliver(b.getAttribute('data-lever')); return; }
+    if((b=t.closest('[data-openfull]'))){ openDrawer(b.getAttribute('data-openfull')); return; }
     if((b=t.closest('[data-open]'))){ openDrawer(b.getAttribute('data-open')); return; }
     if((b=t.closest('[data-day]'))){ var k=b.getAttribute('data-day'); selDay=(selDay===k?null:k); renderCal(); return; }
   });

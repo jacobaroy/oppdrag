@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="nn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AROYFILM Oppdrag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Archivo:wdth,wght@125,800&display=swap">
+<style>
+/* Layout: verktøylinje øvst (merke, område, nytt oppdrag), nøkkeltal, kalender + «treng deg», oppdragstabell gruppert etter status, skuff frå høgre for registrering. */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  /* AROYFILM: svart og kvitt, som aroyfilm.no. Statusfargar er dei einaste fargane. */
+  --bg:#000000; --surface:#0B0B0B; --ink:#FFFFFF; --muted:rgba(255,255,255,.62); --faint:rgba(255,255,255,.38); --line:rgba(255,255,255,.12); --hover:rgba(255,255,255,.06);
+  --accent:#FFFFFF;
+  --s-tilbod:rgba(255,255,255,.4); --s-booka:#6E9BD1; --s-filma:#A497E0; --s-levert:#E8B04E; --s-retting:#F0614F; --s-godkjent:#E8B04E; --s-fakturert:#5FB884;
+  --sans:"Inter",ui-sans-serif,system-ui,sans-serif; --mono:"Inter",ui-sans-serif,system-ui,sans-serif; --wide:"Archivo","Inter",sans-serif;
+  --r:12px; color-scheme:dark;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#000}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* Toppline */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1180px;margin:0 auto;padding-block:12px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:12px;margin-right:auto}
+.brand .wm{font-family:var(--wide);font-stretch:125%;font-weight:800;font-size:18px;letter-spacing:.02em;color:#fff}
+.brand span{color:var(--muted);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.seg{display:inline-flex;background:var(--hover);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:#fff;color:#000}
+.btn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:#fff;color:#000;border-color:#fff;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px}
+.btn.primary:hover{opacity:.88;background:#fff}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--s-retting)}
+.icon{width:30px;height:30px;padding:0;justify-content:center}
+
+@media (max-width:640px){.bar-in{gap:10px}.bar #areas{order:3;width:100%;display:flex}.bar #areas button{flex:1}}
+.wrap{max-width:1180px;margin:0 auto;padding-block:24px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+.ph .sub{color:var(--muted);font-weight:400;margin-left:6px}
+
+/* Nøkkeltal */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.money .kpi{cursor:default}.money .kpi .s{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.kpi{padding:16px 18px;display:flex;flex-direction:column;gap:6px;border:0;border-left:1px solid var(--line);background:transparent;text-align:left;cursor:pointer;color:inherit;font:inherit}
+.kpi:hover{background:var(--hover)}
+.kpi[aria-pressed="true"]{background:var(--hover);box-shadow:inset 0 -2px 0 var(--ink)}
+.kpi:first-child{border-top-left-radius:var(--r);border-bottom-left-radius:var(--r)}.kpi:last-child{border-top-right-radius:var(--r);border-bottom-right-radius:var(--r)}
+.clearf{font-size:12px;color:var(--muted);margin-left:8px;border:0;background:none;text-decoration:underline;cursor:pointer;padding:0}
+.kpi:first-child{border-left:0}
+.kpi .l{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px}
+.kpi .v{font-size:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+.kpi.alert .v{color:var(--s-levert)}
+.kpi.bad .v{color:var(--s-retting)}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(3){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--line)}}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media (max-width:960px){.split{grid-template-columns:1fr}}
+
+/* Kalender */
+.calnav{display:flex;align-items:center;gap:4px}
+.calnav .t{font-weight:900;font-size:12px;letter-spacing:.1em;text-transform:uppercase;min-width:130px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow{font-family:var(--mono);font-size:11px;color:var(--faint);padding:8px 10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+.day{min-height:92px;padding:6px 6px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0;background:transparent;text-align:left;border-top:0;border-left:0;border-radius:0}
+.day:nth-child(7n+7){border-right:0}
+.day:hover{background:var(--hover)}
+.day.out .dn{color:var(--faint)}
+.day.sel{background:var(--hover);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.dn{font-family:var(--mono);font-size:12px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.day.today .dn{background:#fff;color:#000;font-weight:800}
+.ev{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.3;padding:2px 4px;border-radius:4px;min-width:0;cursor:pointer}
+.ev:hover{background:var(--surface)}
+.ev b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev time{font-family:var(--mono);font-size:11px;color:var(--muted);flex:none}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--c,var(--faint))}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+.daylist{padding:12px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.daylist h3{margin:0;font-size:13px;font-weight:600}
+@media (max-width:640px){.day{min-height:52px;padding:4px}.ev b,.ev time{display:none}.ev{padding:0;display:inline-flex}.evs{display:flex;gap:3px;flex-wrap:wrap}.dow{padding:6px 4px;text-align:center}.dn{font-size:11px}}
+
+/* Treng deg */
+.todo{list-style:none;margin:0;padding:6px}
+.todo li{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:8px;cursor:pointer}
+.todo li:hover{background:var(--hover)}
+.todo .dot{margin-top:5px}
+.todo .tx{display:flex;flex-direction:column;min-width:0}
+.todo .tx b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.todo .tx span{color:var(--muted);font-size:13px}
+.empty{padding:22px 16px;color:var(--muted);text-align:center}
+
+/* Tabell */
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.chipbtn[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.tbl td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr.job{cursor:pointer}
+.tbl tr.job:hover td{background:var(--hover)}
+.tbl tr.grp td{background:var(--bg);font-size:12px;font-weight:600;padding:8px 16px;color:var(--muted)}
+.tbl tr.grp .dot{display:inline-block;margin-right:8px;vertical-align:1px}
+.tbl tr:last-child td{border-bottom:0}
+.addr b{font-weight:500;display:block}
+.addr span{color:var(--muted);font-size:13px}
+.num{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{font-size:12px;color:var(--muted);white-space:nowrap}
+.statsel{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 26px 4px 22px;font-size:12px;font-weight:500;cursor:pointer;
+  background-image:radial-gradient(circle at 10px 50%,var(--c) 3.5px,transparent 4px),linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:0 0,calc(100% - 12px) 52%,calc(100% - 8px) 52%;background-size:100% 100%,4px 4px,4px 4px;background-repeat:no-repeat}
+@media (max-width:760px){
+  .tbl thead{display:none}
+  .tbl tr.job{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .tbl tr.job td{padding:0;border:0;background:transparent!important}
+  .tbl tr.job .c-date,.tbl tr.job .c-area,.tbl tr.job .c-type,.tbl tr.job .c-foto{grid-column:1;display:inline}
+  .tbl tr.job .c-addr{grid-column:1;grid-row:1}
+  .tbl tr.job .c-stat{grid-column:2;grid-row:1}
+  .tbl tr.job .meta-m{grid-column:1/-1;color:var(--muted);font-size:13px}
+  .tbl .c-date,.tbl .c-area,.tbl .c-type,.tbl .c-foto{display:none!important}
+}
+@media (min-width:761px){.meta-m{display:none}}
+
+/* Skuff */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);box-shadow:-20px 0 40px rgba(0,0,0,.08)}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dh h2{margin:0;font-size:16px;font-weight:600}
+.db{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.df{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.df .sp{margin-left:auto}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>span{font-size:12px;font-weight:500;color:var(--muted)}
+.fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface);min-width:0;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--ink)}
+.fld textarea{min-height:80px;resize:vertical}
+.big input{font-size:18px;font-weight:600;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:4px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg.full{display:flex}.seg.full button{flex:1}
+.err{color:var(--s-retting);font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#000;font-weight:600;padding:10px 16px;border-radius:8px;font-size:13px;z-index:50}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+<style>
+.who{color:var(--muted);font-size:13px}
+.month{width:100%;border-collapse:collapse}
+.month th{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.month td{padding:11px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.month tr:last-child td{border-bottom:0}
+.month td.n{font-family:var(--mono)}
+.month tr.sum td{font-weight:600;background:var(--bg)}
+.onb{max-width:420px;margin:60px auto;display:flex;flex-direction:column;gap:16px;padding:24px}
+.onb h1{margin:0;font-family:var(--wide);font-stretch:125%;font-weight:800;font-size:22px;text-transform:uppercase}
+.onb p{margin:0;color:var(--muted)}
+.prog{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;width:150px;margin-bottom:6px}
+.prog i{height:4px;border-radius:2px;background:var(--line)}
+.prog i.on{background:#fff}
+.prog i.bad{background:var(--s-retting)}
+.inv{font-size:12px;color:var(--faint);white-space:nowrap}
+.inv.ok{color:var(--s-fakturert);font-weight:600}
+.inv.due{color:var(--s-godkjent);font-weight:600}
+.sub2{display:block;color:var(--faint);font-size:12px}
+@media (max-width:760px){.tbl tr.job .c-stat .prog{width:110px}}
+.hint{font-size:12px;color:var(--faint);font-weight:400}
+.offers{display:flex;flex-direction:column}
+.offer{padding:16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.offer:last-child{border-bottom:0}
+.offer-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.offer-h b{font-size:17px;font-weight:700;display:block}
+.offer-h span{color:var(--muted);font-size:13px}
+.offer-pay{text-align:right;display:flex;flex-direction:column}
+.offer-pay b{font-size:20px}
+.offer-a{display:flex;gap:8px;flex-wrap:wrap}
+.chk2{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);cursor:pointer}
+.chk2 input{margin-top:2px;accent-color:#fff;width:16px;height:16px}
+#offerPanel{border-color:var(--ink)}
+.pvbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;color:#000;border-radius:var(--r);padding:12px 16px;font-size:14px}
+.pvbar .btn.primary{background:#000;color:#fff;border-color:#000}
+.invgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px}
+@media (max-width:760px){.invgrid{grid-template-columns:1fr}}
+.kv2{display:grid;grid-template-columns:max-content 1fr;gap:10px 16px;margin:0;font-size:14px;align-content:start}
+.kv2 dt{color:var(--faint);font-size:12px;padding-top:2px}
+.kv2 dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.invsum{display:flex;flex-direction:column;gap:8px}
+.invrow{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.invrow.tot{font-weight:800;border-bottom:0}
+@media (max-width:520px){.offer-pay{text-align:left}}
+.invform{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr auto;gap:12px;padding:16px;align-items:end}
+@media (max-width:860px){.invform{grid-template-columns:1fr 1fr}.invform button{grid-column:1/-1}}
+.users td{vertical-align:middle}
+.users select{border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--surface);font-size:13px}
+.users select:disabled{opacity:.5}
+.pill2{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;border:1px solid var(--line);white-space:nowrap}
+.pill2.on{color:var(--s-fakturert);border-color:var(--s-fakturert)}
+.pill2.off{color:var(--faint)}
+.pill2.wait{color:var(--s-levert);border-color:var(--s-levert)}
+.ubtn{font-size:12px;padding:5px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips.sub{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.chip2{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chip2:hover{color:var(--ink);border-color:var(--muted)}
+.chip2[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff}
+.chip2.add{border-style:dashed}
+.newtyp input{border:1px solid var(--ink);border-radius:999px;padding:7px 13px;font-size:13px;background:transparent;min-width:180px}
+.lever{font-size:12px;padding:5px 10px}
+@media (max-width:760px){.tbl tr.job td.c-foto:has(.lever){display:block!important;grid-column:1/-1;grid-row:auto;margin-top:6px}.tbl tr.job td.c-foto .lever{width:100%;justify-content:center;padding:9px 10px;font-size:14px}}
+.cap th{white-space:nowrap}
+.cap td{vertical-align:top;min-width:112px;padding:8px 10px}
+.cap td:first-child{min-width:130px}
+.cap th.today{color:var(--accent)}
+.capc{display:block;font-size:12px;line-height:1.3;padding:4px 6px;border-radius:5px;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;text-align:left;font-family:var(--sans)}
+.capc.job{background:var(--hover);cursor:pointer}
+.capc.job .dot{display:inline-block;margin-right:5px;vertical-align:1px}
+.capc.free{color:var(--faint);border:1px dashed var(--line);background:none;cursor:pointer;width:100%}
+.capc.free:hover{color:var(--ink);border-color:var(--ink)}
+.capc.busy{color:var(--muted);background:repeating-linear-gradient(45deg,var(--hover) 0 5px,transparent 5px 10px);border:1px solid var(--line)}
+.cap td.dbl{box-shadow:inset 0 0 0 2px var(--s-retting)}
+.dblnote{font-size:11px;color:var(--s-retting);font-weight:600}
+.warn{background:color-mix(in srgb,var(--s-retting) 10%,transparent);border:1px solid var(--s-retting);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13px}
+.split.one{grid-template-columns:1fr}
+.kpi .s{display:block;font-size:12px;color:var(--muted)}@media (max-width:640px){.kpi .v{font-size:24px}}
+.kpi.static{cursor:default}.kpi.static:hover{background:transparent}
+.next{list-style:none;margin:0;padding:6px}
+.next li{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 10px;border-radius:8px;cursor:pointer}
+.next li:hover{background:var(--hover)}
+.next .when b{display:block;font-size:15px;font-weight:700}.next .when span{color:var(--muted);font-size:13px}
+.next .tx b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.next .tx span{color:var(--muted);font-size:13px}
+.next .hon{font-weight:600;white-space:nowrap;text-align:right}.next .hon span{display:block;color:var(--faint);font-size:12px;font-weight:400}
+.next li.soon .when b{color:var(--s-booka)}
+@media (max-width:640px){.next li{grid-template-columns:88px minmax(0,1fr);gap:10px}.next .when b{font-size:14px;white-space:nowrap}.next .hon{grid-column:2;text-align:left}.next .hon span{display:inline;margin-left:6px}}
+.menu{flex-direction:column;gap:3px;width:38px;height:38px;order:9}.menu span{display:block;width:16px;height:2px;background:var(--ink);border-radius:1px}
+.infob{gap:0;padding-top:4px}.infob section{padding:18px 0;border-bottom:1px solid var(--line)}.infob section:last-child{border-bottom:0}
+.infob h3{margin:0 0 10px;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+.infob p{margin:0 0 8px;color:var(--muted)}.infob a:not(.btn){color:var(--ink)}
+.ksearch{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;min-width:200px}
+.ktbl tr.krow{cursor:pointer}.ktbl tr.krow:hover td{background:var(--hover)}.ktbl tr.krow.open td{background:var(--hover)}
+.ktbl td.r,.ktbl th.r{text-align:right}
+.kdet td{background:var(--bg);padding:16px}
+.kgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:760px){.kgrid{grid-template-columns:1fr}.ktbl .hm{display:none}.ksearch{min-width:0;width:100%}}
+.kform{display:flex;flex-direction:column;gap:10px}
+.kjobs{list-style:none;margin:0;padding:0}.kjobs li{display:flex;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}.kjobs li:hover{background:var(--hover)}
+.kjobs li .d{color:var(--muted);width:84px;flex:none}.kjobs li b{font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Tomme dagar i vekeoversikta: ingen tekst, berre ein «+» når du peikar. Mindre støy. */
+.capc.free{color:transparent;border-color:transparent;min-height:26px}
+.capc.free:hover,.capc.free:focus-visible{color:var(--muted);border-color:var(--line)}
+.backup{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px}
+.backup p{margin:0;color:var(--muted);font-size:13px}
+.backup .btns{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+</head>
+<body>
+
+<header class="bar"><div class="bar-in">
+  <div class="brand"><span class="wm">AROYFILM</span><span id="brandSub">Oppdrag</span></div>
+  <div class="seg" role="tablist" aria-label="Område" id="areas" hidden>
+    <button role="tab" data-area="Alle" aria-selected="true">Alle</button>
+    <button role="tab" data-area="Oslo" aria-selected="false">Oslo</button>
+    <button role="tab" data-area="Bergen" aria-selected="false">Bergen</button>
+    <button role="tab" data-area="Sogn" aria-selected="false">Sogn</button>
+  </div>
+  <div class="seg" role="tablist" aria-label="Side" id="nav" hidden>
+    <button role="tab" data-ov="idag" aria-selected="true">I dag</button>
+    <button role="tab" data-ov="oversikt" aria-selected="false">Oversikt</button>
+    <button role="tab" data-ov="kundar" aria-selected="false">Kundar</button>
+    <button role="tab" data-ov="brukarar" aria-selected="false">Brukarar</button>
+  </div>
+  <span class="who" id="who" hidden></span>
+  <button class="btn icon menu" id="infoBtn" type="button" aria-label="Info og fakturering" hidden><span></span><span></span><span></span></button>
+  <button class="btn" id="blockBtn" type="button" hidden>Merk meg opptatt</button>
+  <button class="btn primary" id="newBtn" type="button" hidden>+ Nytt oppdrag</button>
+</div></header>
+
+<section class="panel onb" id="login" hidden>
+  <h1>Logg inn</h1>
+  <p>Skriv inn e-posten din, så får du ei innloggingslenke på mail. Du treng ikkje passord.</p>
+  <form id="loginForm" style="display:flex;flex-direction:column;gap:12px">
+    <label class="fld"><span>E-post</span><input id="l-email" type="email" required autocomplete="email" placeholder="namn@aroyfilm.no"></label>
+    <button class="btn primary" type="submit" id="l-btn" style="justify-content:center">Send innloggingslenke</button>
+  </form>
+  <p class="hint" id="l-msg" hidden></p>
+</section>
+
+<section class="panel onb" id="noaccess" hidden>
+  <h1>Ingen tilgang enno</h1>
+  <p id="na-text">Du er logga inn, men har ikkje fått tilgang. Be Jacob invitere deg.</p>
+  <button class="btn" type="button" data-logout>Logg ut</button>
+</section>
+
+<main class="wrap" id="main" hidden>
+  <div class="pvbar" id="pvBar" hidden><span>Førehandsvising: slik ser <b id="pvName"></b> tavla. Du kan ikkje endre noko her.</span><button class="btn primary" type="button" data-pvexit>Tilbake til admin</button></div>
+  <p class="err" id="msg" hidden></p>
+  <section class="panel" id="offerPanel" hidden>
+    <div class="ph"><h2>Nye oppdrag<span class="sub" id="offerCount"></span></h2></div>
+    <div id="offers" class="offers"></div>
+  </section>
+  <section class="panel" id="todoPanel">
+    <div class="ph"><h2 id="todoTitle">Treng deg</h2></div>
+    <ul class="todo" id="todo"></ul>
+  </section>
+  <section class="panel kpis" id="kpis" aria-label="Nøkkeltal"></section>
+  <section class="panel" id="nextPanel" hidden>
+    <div class="ph"><h2>Kommande opptak</h2></div>
+    <ul class="next" id="next"></ul>
+  </section>
+  <div class="split one" id="split">
+    <section class="panel" id="cal"></section>
+  </div>
+  <section class="panel" id="capPanel" hidden>
+    <div class="ph"><h2 id="capTitle">Kapasitet</h2><div class="calnav">
+      <button class="btn ghost icon" type="button" data-cap="-1" aria-label="Førre veke">‹</button>
+      <button class="btn" type="button" data-cap="0">Denne veka</button>
+      <button class="btn ghost icon" type="button" data-cap="1" aria-label="Neste veke">›</button></div></div>
+    <div style="overflow-x:auto"><table class="month cap" id="capTbl"></table></div>
+  </section>
+  <section class="panel" id="monthPanel" hidden>
+    <div class="ph"><h2 id="monthTitle">Denne månaden</h2></div>
+    <div style="overflow-x:auto"><table class="month" id="monthTbl"></table></div>
+  </section>
+  <section class="panel" id="kundePanel" hidden>
+    <div class="ph"><h2>Kundar<span class="sub" id="kCount"></span></h2>
+      <div class="filters"><input id="kSearch" class="ksearch" type="search" placeholder="Søk etter kunde" autocomplete="off"><button class="btn" type="button" data-knew>+ Ny kunde</button></div></div>
+    <div style="overflow-x:auto"><table class="tbl ktbl" id="kTbl"></table></div>
+  </section>
+  <section class="panel" id="listPanel">
+    <div class="ph"><h2 id="listTitle">Oppdrag<span class="sub" id="jobcount"></span></h2>
+      <div class="filters"><button class="chipbtn" data-lmode="aktive" aria-pressed="true" type="button">Aktive</button><button class="chipbtn" data-lmode="fakturert" aria-pressed="false" type="button">Fakturerte</button><button class="chipbtn" data-lmode="alle" aria-pressed="false" type="button">Alle</button></div></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl"></table></div>
+  </section>
+  <section class="panel" id="backupPanel" hidden>
+    <div class="backup"><p>Reservekopi av alle oppdrag, kundar og prisar. Ta ein gong i månaden og legg han i Jottacloud.</p>
+      <div class="btns"><button class="btn" type="button" data-backup="csv">Last ned som Excel</button><button class="btn" type="button" data-backup="json">Last ned full kopi</button></div></div>
+  </section>
+</main>
+
+<main class="wrap" id="admin" hidden>
+  <section class="panel">
+    <div class="ph"><h2>Inviter brukar</h2></div>
+    <form id="invForm" class="invform">
+      <label class="fld"><span>E-post</span><input id="i-email" type="email" required placeholder="namn@domene.no" autocomplete="off"></label>
+      <label class="fld"><span>Namn</span><input id="i-namn" required placeholder="Ola Nordmann" autocomplete="off"></label>
+      <label class="fld"><span>Rolle</span><select id="i-rolle"><option value="fotograf">Fotograf</option><option value="admin">Admin</option></select></label>
+      <label class="fld"><span>Område</span><select id="i-omrade"><option>Oslo</option><option>Bergen</option><option>Sogn</option></select></label>
+      <button class="btn primary" type="submit" style="align-self:end;justify-content:center">Inviter</button>
+    </form>
+    <p class="hint" style="padding:0 16px 16px;margin:0">Send personen lenka til denne sida. Dei loggar inn med e-posten over og får ei innloggingslenke på mail. Rolla og området du set her, gjeld med ein gong.</p>
+  </section>
+  <section class="panel">
+    <div class="ph"><h2>Brukarar<span class="sub" id="ucount"></span></h2></div>
+    <div style="overflow-x:auto"><table class="month users" id="usersTbl"></table></div>
+  </section>
+  <div><button class="btn" type="button" data-logout>Logg ut</button></div>
+</main>
+<p class="err" id="fatal" hidden style="text-align:center;margin:60px 20px"></p>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" hidden>
+  <div class="dh"><h2 id="dtitle">Nytt oppdrag</h2><button class="btn ghost icon" type="button" data-close aria-label="Lukk">✕</button></div>
+  <form id="form" style="display:contents">
+    <div class="db" id="dbody"></div>
+    <div class="df">
+      <button class="btn primary" type="submit" id="saveBtn">Lagre</button>
+      <button class="btn" type="button" data-close>Avbryt</button>
+      <button class="btn ghost danger sp" type="button" id="delBtn" hidden>Slett</button>
+    </div>
+  </form>
+</aside>
+<aside class="drawer" id="info" role="dialog" aria-modal="true" aria-labelledby="ititle" hidden>
+  <div class="dh"><h2 id="ititle">Info</h2><button class="btn ghost icon" type="button" data-iclose aria-label="Lukk">✕</button></div>
+  <div class="db infob">
+    <section><h3>Fakturering</h3>
+      <dl class="kv2" id="invInfo"></dl>
+      <div class="invsum" style="margin-top:14px">
+        <div class="tag" id="invTitle"></div>
+        <div id="invList"></div>
+        <button class="btn" type="button" id="invCopy">Kopier fakturagrunnlag</button>
+      </div>
+    </section>
+    <section><h3>Slik leverer du</h3>
+      <p>Last opp videoen til Frame.io. Opne jobben her, lim inn lenka og trykk Lagre. Då er jobben levert til Jacob, og du treng ikkje sende noko anna.</p>
+      <p>Kjem det rettingar frå kunden, dukkar jobben opp under «Dette må du gjere». Legg inn ny lenke på same måte.</p>
+    </section>
+    <section><h3>Boligfilm</h3>
+      <p>Følg blueprinten, så blir videoen godkjent på første forsøk.</p>
+      <a class="btn" href="https://claude.ai/artifact/DW7N9KunRzrQwf5k14CPVa" target="_blank" rel="noopener">Opne blueprint for boligfilm ↗</a>
+    </section>
+    <section><h3>Ikkje ledig?</h3>
+      <p>Trykk «Merk meg opptatt» øvst, så blir du ikkje booka dei dagane.</p>
+    </section>
+    <section><h3>Spørsmål</h3>
+      <p>Send e-post til <a href="mailto:hei@aroyfilm.no">hei@aroyfilm.no</a>.</p>
+    </section>
+    <section><button class="btn" type="button" data-logout>Logg ut</button></section>
+  </div>
+</aside>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  // Fem steg: booka → filma → levert → godkjent → fakturert. «retting» finst berre i visinga:
+  // i databasen er det status «levert» med retting=true.
+  var STATUSES=[
+    {k:'tilbod',l:'Tilbod sendt'},{k:'booka',l:'Booka'},{k:'filma',l:'Filma, i klipp'},
+    {k:'levert',l:'Levert'},{k:'retting',l:'Rettingar'},
+    {k:'godkjent',l:'Godkjent av kunden'},{k:'fakturert',l:'Fakturert'}];
+  var SL={}; STATUSES.forEach(function(s){SL[s.k]=s});
+  var DONE=['levert','retting','godkjent','fakturert'];   // gjennomført opptak + levert
+  var WORK=['booka','filma','retting'];   // partnaren har noko å levere
+  var AREAS=['Oslo','Bergen','Sogn'], TYPES=['Boligfilm','Boligfilm + drone','Meklar snakkar','Reklamefilm','Sosiale medium','Musikkvideo','Event','Intervju','Dokumentar','Foto'];
+  var CATS=[
+    {k:'Eigedom',t:['Boligfilm','Boligfilm + drone','Meklar snakkar','Meklarprofil']},
+    {k:'Reklame',t:['Reklamefilm','Produktfilm','Merkevarefilm']},
+    {k:'Sosiale medium',t:['Reels / TikTok','Innhaldspakke','Månadleg innhald','Vekeleg innhald']},
+    {k:'Event',t:['Eventfilm','Konsert','Sport']},
+    {k:'Musikk',t:['Musikkvideo']},
+    {k:'Intervju og dokumentar',t:['Intervju','Testimonial','Dokumentar']},
+    {k:'Foto',t:['Foto']},
+    {k:'Anna',t:[]}];
+  function catsNow(){ var c=CATS.map(function(x){return {k:x.k,t:x.t.slice()}}); var all={}; c.forEach(function(x){x.t.forEach(function(t){all[t.toLowerCase()]=1})});
+    items.forEach(function(it){ var t=(it.o.type||'').trim(); if(!t||all[t.toLowerCase()]) return; all[t.toLowerCase()]=1; var cat=c.find(function(x){return x.k===it.o.kategori})||c[c.length-1]; cat.t.push(t); });
+    return c; }
+  function catOf(type){ if(!type) return ''; var c=catsNow().find(function(x){return x.t.some(function(t){return t.toLowerCase()===type.toLowerCase()})}); return c?c.k:'Anna'; }
+  function typeList(){ var m={}, out=[]; CATS.forEach(function(x){ if(x.k!=='Anna'){ m[x.k.toLowerCase()]=1; out.push(x.k); } });
+    items.forEach(function(it){ var t=(it.o.kategori||'').trim()||catOf(it.o.type); if(t&&!m[t.toLowerCase()]&&t!=='Anna'){ m[t.toLowerCase()]=1; out.push(t); } });
+    out.push('Anna'); return out; }
+  function typeHTML(){
+    return '<div class="chips">'+typeList().map(function(k){return '<button type="button" class="chip2" data-kat="'+esc(k)+'" aria-pressed="'+(k===draft.kat)+'">'+esc(k)+'</button>'}).join('')+
+      (draft.newType?'<span class="newtyp"><input id="f-newtype" placeholder="Ny type" autocomplete="off"></span>':'<button type="button" class="chip2 add" data-newtyp>+ Ny</button>')+'</div>'+
+      '<span class="hint" style="display:block;margin-top:8px">Detaljar, til dømes drone eller meklar snakkar, skriv du i notatet.</span>'; }
+  function uniq(field,base){ var m={}; (base||[]).forEach(function(v){m[v.toLowerCase()]=v}); items.forEach(function(it){ var v=(it.o[field]||'').trim(); if(v&&!m[v.toLowerCase()]) m[v.toLowerCase()]=v; }); return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return a.localeCompare(b,'nb')}); }
+  function dl(id,vals){ return '<datalist id="'+id+'">'+vals.map(function(v){return '<option value="'+esc(v)+'"></option>'}).join('')+'</datalist>'; }
+  var MND=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  var MNDK=['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  var DAG=['Måndag','Tysdag','Onsdag','Torsdag','Fredag','Laurdag','Søndag'];
+
+  var sb=null, db=null, me=null, myEmail='', isOwner=false, profile=null;
+  var rows=[], blocks=[], allProfiles=[], invites=[], photogs={}, capOff=0, mode='job', warnOK=false;
+  var PRIS={}, HON={}, AVSLAG=[], offers=[], MVA=0.25, OV='idag';
+  try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
+  var MEG='Jacob';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
+  // Fakturainfo til partnarane. Endre her.
+  var FAKTURA={ namn:'AROYFILM', orgnr:'930 795 577', epost:'hei@aroyfilm.no', adresse:'', merking:'Namnet ditt, månaden og tittelen på kvart oppdrag', samle:'Du kan samle fleire oppdrag på éin faktura, men kvart oppdrag må ha si eiga linje.', frist:'' };
+  function kr(n){ n=Math.round(+n||0); return n.toLocaleString('nb-NO').replace(/,/g,' ')+' kr'; }
+  function inkl(n){ return (+n||0)*(1+MVA); }
+  function hasNum(v){ return v!==undefined&&v!==null&&v!==''; }
+  var items=[], view=[], area='Alle', showDone=false, listMode='aktive', kpi=null, editKey=null, draft={};
+  var now=new Date(), calY=now.getFullYear(), calM=now.getMonth(), selDay=null;
+  var $=function(id){return document.getElementById(id)};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function iso(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+  var TODAY=iso(now.getFullYear(),now.getMonth(),now.getDate());
+  var t2=new Date(now); t2.setDate(t2.getDate()+1); var TOMORROW=iso(t2.getFullYear(),t2.getMonth(),t2.getDate());
+  var MONTH=TODAY.slice(0,7);
+  function sc(k){return 'var(--s-'+(SL[k]?k:'tilbod')+')'}
+  function shortDate(d){ if(!d) return '–'; var p=d.split('-'); return (+p[2])+'. '+MNDK[+p[1]-1]; }
+  function days(o){ var d=(o.dagar&&o.dagar.length)?o.dagar:(o.dato?[{dato:o.dato,tid:o.tid||''}]:[]); return d.filter(function(x){return x&&x.dato}); }
+  function onDay(o,day){ return days(o).find(function(x){return x.dato===day}); }
+  function inMonth(o){ return days(o).some(function(x){return x.dato.slice(0,7)===MONTH}); }
+  function upcoming(o){ var d=days(o); return !d.length || d.some(function(x){return x.dato>=TODAY}); }
+  function fmtDays(o){ var d=days(o); if(!d.length) return '–'; var s=shortDate(d[0].dato)+(d[0].tid?' '+d[0].tid:''); return d.length>1? s+' + '+(d.length-1)+(d.length===2?' dag':' dagar') : s; }
+  function msg(t){ $('msg').textContent=t||''; $('msg').hidden=!t; }
+  var tt; function toast(t){ var e=$('toast'); e.textContent=t; e.hidden=false; clearTimeout(tt); tt=setTimeout(function(){e.hidden=true},2400); }
+  try{ area=localStorage.getItem('aroy-omrade')||'Alle'; }catch(e){}
+
+  // ---- data ----
+  // Kvar jobb: {key (rad-id), uid (fotograf-id eller null), o (felt brukt i visinga)}
+  function rebuild(){
+    var mine=rows;
+    if(!isOwner){ var myOmr=(profile&&profile.omrade)||''; offers=rows.filter(function(r){return r.utlyst&&!r.fotograf_id&&(r.utlyst_til===me||(!r.utlyst_til&&r.utlyst_omrade&&r.utlyst_omrade===myOmr))&&!AVSLAG.some(function(a){return a.oppdrag_id===r.id&&a.fotograf_id===me})}); mine=rows.filter(function(r){return r.fotograf_id===me}); }
+    items=mine.map(function(r){
+      var dg=Array.isArray(r.dagar)?r.dagar:[];
+      var p=r.fotograf_id?(photogs[r.fotograf_id]||{}):{};
+      var o={adresse:r.tittel,kunde:r.kunde,type:r.kategori,kategori:r.kategori,omrade:r.omrade||p.omrade||'',dagar:dg,dato:r.dato||'',tid:(dg[0]||{}).tid||'',
+        status:(r.retting&&r.status==='levert')?'retting':r.status,lenke:r.lenke,notat:r.notat,pris:PRIS[r.id],honorar:HON[r.id],utlyst:!!r.utlyst&&!r.fotograf_id,utlyst_til:r.utlyst_til,utlyst_omrade:r.utlyst_omrade,
+        fotograf:(r.utlyst&&!r.fotograf_id)?(r.utlyst_til?'Spør '+((photogs[r.utlyst_til]||{}).namn||'fotograf'):'Utlyst i '+(r.utlyst_omrade||'området')):r.fotograf_id?(p.namn||(r.fotograf_id===me&&profile?profile.namn:'')||'Fotograf'):r.fotograf_namn};
+      if(!isOwner&&profile){ o.fotograf=profile.namn; o.omrade=o.omrade||profile.omrade; }
+      return {key:r.id, path:r.id, uid:r.fotograf_id||null, o:o};
+    });
+    apply();
+  }
+  function apply(){
+    view = (!isOwner||area==='Alle') ? items : items.filter(function(it){return it.o.omrade===area});
+    [].forEach.call(document.querySelectorAll('[data-area]'),function(b){b.setAttribute('aria-selected',b.getAttribute('data-area')===area?'true':'false')});
+    render();
+  }
+  function by(k){ return view.filter(function(it){return it.o.status===k}); }
+  function find(key){ return items.find(function(it){return it.key===key}); }
+  async function loadAll(){
+    var r1=await sb.from('oppdrag').select('*');
+    if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
+    rows=r1.data||[];
+    var r4=await sb.from('opptatt').select('*'); blocks=r4.data||[];
+    var r5=await sb.from('oppdrag_honorar').select('*'); HON={}; (r5.data||[]).forEach(function(h){ HON[h.oppdrag_id]=+h.belop; });
+    if(isOwner){
+      var r2=await sb.from('profiles').select('*').order('namn'); allProfiles=r2.data||[];
+      var r3=await sb.from('invitasjonar').select('*').order('namn'); invites=r3.data||[];
+      var r6=await sb.from('oppdrag_pris').select('*'); PRIS={}; (r6.data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
+      var r7=await sb.from('avslag').select('*'); AVSLAG=r7.data||[];
+      var r8=await sb.from('kundar').select('*'); KUNDAR={}; (r8.data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
+      photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade,mva:p.mva_registrert!==false}; });
+    }
+    msg(''); rebuild(); if(isOwner) renderUsers();
+  }
+  var lt; function reload(){ clearTimeout(lt); lt=setTimeout(loadAll,250); }
+
+  // ---- render ----
+  function render(){
+    layout();
+    if(isOwner){
+      // Maks fire tal på framsida: det som ventar på deg, og korleis månaden går.
+      var lev=by('levert').length, oms=0, hon=0, fakt=0, utan=0, aar=0, y=now.getFullYear();
+      view.forEach(function(it){var o=it.o; if(o.status==='tilbod') return;
+        if(inMonth(o)){ if(hasNum(o.pris)) oms+=+o.pris; else utan++; hon+=+o.honorar||0; }
+        if(o.status==='godkjent') fakt+=inkl(o.pris);
+        if(String(o.dato||'').slice(0,4)===String(y)) aar+=+o.pris||0; });
+      YEAR=aar; var mn=MND[now.getMonth()];
+      $('kpis').innerHTML=kb('levert',lev?' alert':'','levert','Til gjennomsyn',lev)+
+        kb('godkjent',fakt?' alert':'','godkjent','Klar til faktura',kr(fakt))+
+        mb('Omsetning i '+mn,kr(oms),'eks. mva'+(utan?' · '+utan+' utan pris':''))+
+        mb('Forteneste i '+mn,kr(oms-hon),'etter honorar, eks. mva');
+    } else {
+      renderNext(); renderOffers(); renderInvoice();
+    }
+    renderCal(); renderTodo(); renderCap(); renderMonth(); renderTable();
+    if(isOwner&&OV==='kundar'&&!openK&&!newK) renderKundar();   // ikkje skriv over eit skjema du held på med
+  }
+  var YEAR=0;
+  function mb(l,v,sub){return '<div class="kpi static"><span class="l">'+l+'</span><span class="v">'+v+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'}
+  function renderNext(){
+    var L=[]; view.forEach(function(it){ if(it.o.status!=='booka') return; days(it.o).forEach(function(d,ix){ if(d.dato>=TODAY) L.push({it:it,d:d,ix:ix,n:days(it.o).length}); }); });
+    L.sort(function(a,b){return (a.d.dato+(a.d.tid||'')).localeCompare(b.d.dato+(b.d.tid||''))}); L=L.slice(0,6);
+    if(!L.length){ $('next').innerHTML='<li class="empty" style="display:block;cursor:default">Ingen opptak i kalenderen. Nye jobbar dukkar opp her.</li>'; return; }
+    $('next').innerHTML=L.map(function(x){ var o=x.it.o, p=x.d.dato.split('-'), dt=new Date(+p[0],+p[1]-1,+p[2]);
+      var lbl = x.d.dato===TODAY?'I dag':(x.d.dato===TOMORROW?'I morgon':DAG[(dt.getDay()+6)%7].slice(0,3)+' '+dt.getDate()+'. '+MNDK[dt.getMonth()]);
+      return '<li data-open="'+esc(x.it.key)+'" class="'+(x.d.dato<=TOMORROW?'soon':'')+'"><div class="when"><b>'+esc(lbl)+'</b><span>'+esc(x.d.tid?'kl. '+x.d.tid:'Tid ikkje sett')+'</span></div>'+
+        '<div class="tx"><b>'+esc(o.adresse||'Utan tittel')+(x.n>1?' <span class="hint">dag '+(x.ix+1)+' av '+x.n+'</span>':'')+'</b><span>'+esc([o.kunde,o.type].filter(Boolean).join(' · '))+'</span></div>'+
+        '<div class="hon">'+(hasNum(o.honorar)?kr(o.honorar)+(myMva()?'<span>+ mva</span>':''):'')+'</div></li>'; }).join('');
+  }
+  // Kva som blir vist. Eigar: I dag / Oversikt / Kundar / Brukarar. Partnar: éi side.
+  function layout(){
+    var o=isOwner, v=o?OV:'';
+    [].forEach.call(document.querySelectorAll('[data-ov]'),function(b){b.setAttribute('aria-selected',b.getAttribute('data-ov')===OV?'true':'false')});
+    var adm=o&&v==='brukarar';
+    $('main').hidden=adm; $('admin').hidden=!adm;
+    $('todoPanel').hidden=o&&v!=='idag';
+    $('kpis').hidden=!(o&&v==='idag'); $('capPanel').hidden=!(o&&v==='idag');
+    $('nextPanel').hidden=o;
+    $('split').hidden=o&&v!=='oversikt'; $('listPanel').hidden=o&&v!=='oversikt';
+    $('monthPanel').hidden=!(o&&v==='oversikt'); $('backupPanel').hidden=!(o&&v==='oversikt');
+    $('kundePanel').hidden=!(o&&v==='kundar');
+    $('nav').hidden=!o; $('areas').hidden=!o||v==='kundar'||adm;
+    $('newBtn').hidden=!!PV||adm; $('blockBtn').hidden=o||!!PV; $('infoBtn').hidden=o;
+    $('todoTitle').textContent=o?'Treng deg':'Dette må du gjere';
+    $('brandSub').textContent=o?'Oppdrag':'Mine jobbar';
+    if(!o&&profile){ $('who').textContent=(profile.namn||'')+(profile.omrade?' · '+profile.omrade:''); }
+    $('who').hidden=o;
+  }
+  // ---- kundearkiv (berre eigar) ----
+  var KUNDAR={}, openK=null, newK=false, kQ='';
+  function kslug(n){ return String(n||'').trim().toLowerCase().replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,120)||'utan-namn'; }
+  function kundeList(){
+    var M={};
+    Object.keys(KUNDAR).forEach(function(id){ var k=KUNDAR[id]; M[id]={id:id,namn:k.namn||id,info:k,jobs:[],oms:0,sist:'',forst:''}; });
+    items.forEach(function(it){ var n=(it.o.kunde||'').trim(); if(!n) return; var id=kslug(n);
+      var r=M[id]||(M[id]={id:id,namn:n,info:{},jobs:[],oms:0,sist:'',forst:''});
+      r.jobs.push(it); if(it.o.status!=='tilbod') r.oms+=+it.o.pris||0;
+      var d=it.o.dato||''; if(d&&d>r.sist) r.sist=d; if(d&&(!r.forst||d<r.forst)) r.forst=d; });
+    return Object.keys(M).map(function(k){return M[k]}); }
+  function longDate(d){ if(!d) return '–'; var p=d.split('-'); return (+p[2])+'. '+MNDK[+p[1]-1]+' '+p[0]; }
+  function renderKundar(){
+    var L=kundeList(), q=kQ.trim().toLowerCase();
+    if(q) L=L.filter(function(r){ var i=r.info||{}; return [r.namn,i.kontakt,i.epost,i.tlf].join(' ').toLowerCase().indexOf(q)>=0; });
+    L.sort(function(a,b){ return (b.sist||'').localeCompare(a.sist||'') || a.namn.localeCompare(b.namn,'nb'); });
+    $('kCount').textContent=L.length?String(L.length):'';
+    var h='<thead><tr><th>Kunde</th><th class="r">Oppdrag</th><th class="hm">Sist</th><th class="r">Omsetning</th></tr></thead><tbody>';
+    if(newK) h+='<tr class="kdet"><td colspan="4">'+kForm({id:'',namn:'',info:{},jobs:[]},true)+'</td></tr>';
+    if(!L.length&&!newK) h+='<tr><td colspan="4" class="empty">'+(q?'Ingen kundar passar søket.':'Ingen kundar enno. Dei dukkar opp her når du legg inn oppdrag med kunde.')+'</td></tr>';
+    L.forEach(function(r){ var i=r.info||{}, op=openK===r.id;
+      h+='<tr class="krow'+(op?' open':'')+'" data-kopen="'+esc(r.id)+'"><td class="addr"><b>'+esc(r.namn)+'</b><span>'+esc([i.kontakt,i.tlf||i.epost].filter(Boolean).join(' · '))+'</span></td>'+
+        '<td class="r num">'+r.jobs.length+'</td><td class="hm num">'+esc(longDate(r.sist))+'</td><td class="r num">'+kr(r.oms)+'</td></tr>';
+      if(op) h+='<tr class="kdet"><td colspan="4">'+kForm(r,false)+'</td></tr>';
+    });
+    $('kTbl').innerHTML=h+'</tbody>';
+  }
+  function kForm(r,isNew){
+    var i=r.info||{};
+    var f=function(id,l,v,t,ph){return '<label class="fld"><span>'+l+'</span><input id="k-'+id+'" type="'+(t||'text')+'" value="'+esc(v||'')+'" placeholder="'+esc(ph||'')+'"></label>'};
+    var jobs=r.jobs.slice().sort(function(a,b){return String(b.o.dato||'').localeCompare(String(a.o.dato||''))});
+    return '<div class="kgrid"><div class="kform" data-kid="'+esc(r.id)+'">'+
+      (isNew?f('namn','Kundenamn','','text','Namn på bedrift eller person'):'<div class="tag">Kunde sidan '+esc(longDate(r.forst))+'</div>')+
+      f('kontakt','Kontaktperson',i.kontakt)+'<div class="two">'+f('epost','E-post',i.epost,'email')+f('tlf','Telefon',i.tlf,'tel')+'</div>'+
+      '<label class="fld"><span>Notat</span><textarea id="k-notat" placeholder="Til dømes kva dei likar, faste prisar, faktura-adresse">'+esc(i.notat||'')+'</textarea></label>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-ksave>Lagre</button><button class="btn" type="button" data-kclose>Lukk</button>'+
+      (!isNew?'<button class="btn" type="button" data-knewjob="'+esc(r.namn)+'">+ Nytt oppdrag</button>':'')+'</div></div>'+
+      (isNew?'':'<div><div class="tag" style="margin-bottom:6px">Oppdrag ('+jobs.length+')</div><ul class="kjobs">'+(jobs.length?jobs.map(function(it){var o=it.o;return '<li data-open="'+esc(it.key)+'"><span class="d">'+esc(longDate(o.dato))+'</span><i class="dot" style="--c:'+sc(o.status)+'"></i><b>'+esc(o.adresse||'Utan tittel')+'</b><span class="tag">'+(hasNum(o.pris)?kr(o.pris):'')+'</span></li>'}).join(''):'<li style="cursor:default" class="tag">Ingen oppdrag enno.</li>')+'</ul></div>')+
+      '</div>';
+  }
+  async function kSave(){
+    var box=document.querySelector('.kform'); if(!box) return;
+    var id=box.getAttribute('data-kid'), v=function(k){var e=$('k-'+k);return e?e.value.trim():''};
+    var namn = id ? ((KUNDAR[id]||{}).namn || (kundeList().find(function(r){return r.id===id})||{}).namn || id) : v('namn');
+    if(!namn){ $('k-namn').focus(); return; }
+    var nid = id || kslug(namn);
+    try{ await run(sb.from('kundar').upsert({id:nid,namn:namn,kontakt:v('kontakt'),epost:v('epost'),tlf:v('tlf'),notat:v('notat')}));
+      KUNDAR[nid]={id:nid,namn:namn,kontakt:v('kontakt'),epost:v('epost'),tlf:v('tlf'),notat:v('notat')}; newK=false; openK=nid; renderKundar(); toast('Kunden er lagra'); }
+    catch(err){ toast(writeErr(err)); }
+  }
+  // ---- reservekopi (berre eigar) ----
+  function save(name,text,type){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+  async function backup(kind){
+    var dag=TODAY;
+    if(kind==='csv'){
+      var q=function(v){ v=v==null?'':String(v); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+      var head=['Dato','Tittel','Kunde','Type','Område','Fotograf','Status','Kundepris eks. mva','Honorar eks. mva','Forteneste','Lenke','Notat'];
+      var lines=items.slice().sort(function(a,b){return String(a.o.dato||'').localeCompare(String(b.o.dato||''))}).map(function(it){ var o=it.o;
+        return [o.dato,o.adresse,o.kunde,o.type,o.omrade,o.fotograf,(SL[o.status]||{}).l,o.pris,o.honorar,hasNum(o.pris)?o.pris-(+o.honorar||0):'',o.lenke,o.notat].map(q).join(';'); });
+      save('aroyfilm-oppdrag-'+dag+'.csv','﻿'+[head.join(';')].concat(lines).join('\n'),'text/csv;charset=utf-8');
+    } else {
+      var out={laga:new Date().toISOString()};
+      for(var t of ['oppdrag','oppdrag_pris','oppdrag_honorar','kundar','profiles','invitasjonar','opptatt','avslag']){ var r=await sb.from(t).select('*'); out[t]=r.data||[]; }
+      save('aroyfilm-reservekopi-'+dag+'.json',JSON.stringify(out,null,2),'application/json');
+    }
+    toast('Reservekopien er lasta ned');
+  }
+  function kb(id,cls,dot,label,v){ return '<button type="button" class="kpi'+cls+'" data-kpi="'+id+'" aria-pressed="'+(kpi===id?'true':'false')+'"><span class="l">'+(dot?'<i class="dot" style="--c:var(--s-'+dot+')"></i>':'')+label+'</span><span class="v">'+v+'</span></button>'; }
+  function kpiMatch(it){
+    var s=it.o.status;
+    switch(kpi){
+      case 'aktive': return s!=='fakturert'&&s!=='tilbod';
+      case 'levert': case 'retting': case 'godkjent': return s===kpi;
+      case 'kommande': return s==='booka'&&upcoming(it.o);
+      case 'lever': return ['filma','retting'].indexOf(s)>=0;
+      case 'ferdig': case 'ferdig2': return DONE.indexOf(s)>=0&&inMonth(it.o);
+      default: return true;
+    }
+  }
+  var KPIL={ferdig2:'Levert denne månaden',aktive:'Aktive oppdrag',levert:'Til gjennomsyn',retting:'Rettingar',godkjent:'Klar til faktura',kommande:'Kommande opptak',lever:'Skal leverast',ferdig:'Levert denne månaden',alle:'Alle'};
+
+  function jobsOn(day){return view.filter(function(it){return onDay(it.o,day)}).sort(function(a,b){return String(onDay(a.o,day).tid||'').localeCompare(String(onDay(b.o,day).tid||''))})}
+  function renderCal(){
+    var first=new Date(calY,calM,1), start=(first.getDay()+6)%7, days=new Date(calY,calM+1,0).getDate();
+    var cap=MND[calM].charAt(0).toUpperCase()+MND[calM].slice(1);
+    var h='<div class="ph"><div class="calnav"><span class="t">'+cap+' '+calY+'</span></div><div class="calnav">'+
+      '<button class="btn ghost icon" type="button" data-cal="-1" aria-label="Førre månad">‹</button>'+
+      '<button class="btn" type="button" data-cal="0">I dag</button>'+
+      '<button class="btn ghost icon" type="button" data-cal="1" aria-label="Neste månad">›</button></div></div><div class="grid">';
+    ['Må','Ty','On','To','Fr','La','Sø'].forEach(function(d){h+='<div class="dow">'+d+'</div>'});
+    var cells=Math.ceil((start+days)/7)*7;
+    for(var i=0;i<cells;i++){
+      var dt=new Date(calY,calM,i-start+1), key=iso(dt.getFullYear(),dt.getMonth(),dt.getDate()), js=jobsOn(key);
+      var evs=js.slice(0,3).map(function(it){var o=it.o, tdy=onDay(o,key).tid;return '<span class="ev" data-open="'+esc(it.key)+'" title="'+esc(o.adresse)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i>'+(tdy?'<time>'+esc(tdy)+'</time>':'')+'<b>'+esc(o.adresse||'')+'</b></span>'}).join('');
+      evs+=blocksOn(key).map(function(b){return '<span class="ev" '+(isOwner?'':'data-blk="'+esc(b.key)+'" ')+'title="'+esc(b.notat||'Opptatt')+'"><i class="dot" style="--c:var(--faint)"></i><b>'+esc(isOwner?((photogs[b.uid]||{}).namn||'Fotograf')+' opptatt':'Opptatt')+'</b></span>'}).join('');
+      h+='<button type="button" class="day'+(dt.getMonth()!==calM?' out':'')+(key===TODAY?' today':'')+(key===selDay?' sel':'')+'" data-day="'+key+'" aria-label="'+key+', '+js.length+' oppdrag"><span class="dn">'+dt.getDate()+'</span><span class="evs">'+evs+'</span>'+(js.length>3?'<span class="more">+'+(js.length-3)+' til</span>':'')+'</button>';
+    }
+    h+='</div>';
+    if(selDay){
+      var p=selDay.split('-'), dd=new Date(+p[0],+p[1]-1,+p[2]), sj=jobsOn(selDay);
+      h+='<div class="daylist"><h3>'+DAG[(dd.getDay()+6)%7]+' '+dd.getDate()+'. '+MND[dd.getMonth()]+'</h3>'+
+        (sj.length?'<ul class="todo" style="padding:0">'+sj.map(function(it){var o=it.o, ds=days(o), ix=ds.findIndex(function(x){return x.dato===selDay}), tdy=ds[ix].tid;return '<li data-open="'+esc(it.key)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc((tdy?tdy+'  ':'')+(o.adresse||'')+(ds.length>1?'  (dag '+(ix+1)+' av '+ds.length+')':''))+'</b><span>'+esc([o.kunde,isOwner?o.fotograf:'',(SL[o.status]||{}).l].filter(Boolean).join(' · '))+'</span></div></li>'}).join('')+'</ul>':'<span class="tag">Ingen oppdrag denne dagen.</span>')+
+        '<div><button class="btn" type="button" data-addday="'+selDay+'">+ Nytt oppdrag denne dagen</button></div></div>';
+    }
+    $('cal').innerHTML=h;
+  }
+
+  function renderTodo(){
+    var list=[];
+    view.forEach(function(it){ var o=it.o, why='';
+      if(isOwner){
+        if(o.status==='levert') why='Sjå over videoen';
+        else if(o.status==='retting') why='Rettingar frå kunden';
+        else if(o.status==='godkjent') why='Klar til faktura';
+        else if(o.utlyst){ var av=AVSLAG.filter(function(a){return a.oppdrag_id===it.key}); why = (o.utlyst_til&&av.some(function(a){return a.fotograf_id===o.utlyst_til})) ? ((photogs[o.utlyst_til]||{}).namn||'Fotografen')+' sa nei. Tildel på nytt' : 'Ventar på svar'+(av.length?' ('+av.length+' har sagt nei)':''); }
+        else if(o.status==='booka'&&!o.fotograf) why='Manglar fotograf';
+      } else {
+        var dT=onDay(o,TODAY), dM=onDay(o,TOMORROW);
+        if(o.status==='booka'&&(dT||dM)) why='Opptak '+(dT?'i dag':'i morgon')+((dT||dM).tid?' kl. '+(dT||dM).tid:'');
+        else if(o.status==='filma') why='Lever video';
+        else if(o.status==='retting') why='Rettingar frå kunden';
+      }
+      if(why) list.push({it:it,why:why});
+    });
+    $('todo').innerHTML = list.length ? list.map(function(x){var o=x.it.o;return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div></li>'}).join('')
+      : '<li class="empty" style="cursor:default">'+(isOwner?'Ingenting ventar på deg.':'Alt er levert. Godt jobba.')+'</li>';
+  }
+
+  function renderMonth(){
+    if(!isOwner) return;
+    $('monthTitle').innerHTML=MND[now.getMonth()].charAt(0).toUpperCase()+MND[now.getMonth()].slice(1)+' per fotograf <span class="sub">beløp eks. mva · omsetning i '+now.getFullYear()+': '+kr(YEAR)+'</span>';
+    var R={};
+    view.forEach(function(it){ var o=it.o; if(!inMonth(o)||o.status==='tilbod') return;
+      var k=o.utlyst?'_utlyst':(it.uid||('x:'+(o.fotograf||'Utan fotograf')));
+      var r=R[k]||(R[k]={namn:o.utlyst?'Ikkje tildelt':(it.uid?((photogs[it.uid]||{}).namn||'Fotograf'):(o.fotograf||'Utan fotograf')),omr:it.uid?((photogs[it.uid]||{}).omrade||''):(o.omrade||''),tot:0,done:0,oms:0,hon:0,fakt:0});
+      r.tot++; if(DONE.indexOf(o.status)>=0) r.done++;
+      r.oms+=+o.pris||0; r.hon+=+o.honorar||0; if(o.status==='godkjent') r.fakt+=inkl(o.pris);
+    });
+    var ks=Object.keys(R);
+    if(!ks.length){ $('monthTbl').innerHTML='<tr><td class="empty">Ingen opptak denne månaden enno.</td></tr>'; return; }
+    var S={tot:0,done:0,oms:0,hon:0,fakt:0};
+    var h='<thead><tr><th>Fotograf</th><th>Område</th><th>Opptak</th><th>Gjennomført</th><th>Omsetning</th><th>Honorar</th><th>Forteneste</th><th>Til faktura inkl. mva</th></tr></thead><tbody>';
+    ks.sort(function(a,b){return R[a].namn.localeCompare(R[b].namn)}).forEach(function(k){var r=R[k]; ['tot','done','oms','hon','fakt'].forEach(function(f){S[f]+=r[f]});
+      h+='<tr><td>'+esc(r.namn)+'</td><td class="tag">'+esc(r.omr||'–')+'</td><td class="n">'+r.tot+'</td><td class="n">'+r.done+'</td><td class="n">'+kr(r.oms)+'</td><td class="n">'+kr(r.hon)+'</td><td class="n">'+kr(r.oms-r.hon)+'</td><td class="n">'+kr(r.fakt)+'</td></tr>'; });
+    h+='<tr class="sum"><td>Totalt</td><td></td><td class="n">'+S.tot+'</td><td class="n">'+S.done+'</td><td class="n">'+kr(S.oms)+'</td><td class="n">'+kr(S.hon)+'</td><td class="n">'+kr(S.oms-S.hon)+'</td><td class="n">'+kr(S.fakt)+'</td></tr></tbody>';
+    $('monthTbl').innerHTML=h;
+  }
+  function myMva(){ return !profile || profile.mva_registrert!==false; }
+  function honText(v,mva){ if(!hasNum(v)) return 'Ikkje sett enno'; return mva? kr(v)+' + mva = '+kr(inkl(v)) : kr(v); }
+
+  // ---- fakturering (partnar) ----
+  function invLines(){ return view.filter(function(it){return DONE.indexOf(it.o.status)>=0&&inMonth(it.o)}).sort(function(a,b){return String(a.o.dato).localeCompare(String(b.o.dato))}); }
+  function renderInvoice(){
+    if(isOwner) return;
+    var info=[['Fakturamottakar',FAKTURA.namn],['Org.nr.',FAKTURA.orgnr],['Send til',FAKTURA.epost],['Adresse',FAKTURA.adresse],['Merk med',FAKTURA.merking],['Fleire oppdrag',FAKTURA.samle],['Frist',FAKTURA.frist]].filter(function(x){return x[1]});
+    $('invInfo').innerHTML=info.map(function(x){return '<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd>'}).join('');
+    var L=invLines(), sum=L.reduce(function(a,it){return a+(+it.o.honorar||0)},0), mva=myMva();
+    $('invTitle').textContent='Grunnlag for '+MND[now.getMonth()]+' '+now.getFullYear()+(mva?' (eks. mva)':'');
+    $('invList').innerHTML = L.length ? L.map(function(it){return '<div class="invrow"><span>'+esc(shortDate(it.o.dato))+' · '+esc(it.o.adresse)+'</span><span>'+(hasNum(it.o.honorar)?kr(it.o.honorar):'ikkje sett')+'</span></div>'}).join('')+
+      '<div class="invrow tot"><span>Sum'+(mva?' eks. mva':'')+'</span><span>'+kr(sum)+'</span></div>'+(mva?'<div class="invrow"><span>Mva 25 %</span><span>'+kr(sum*MVA)+'</span></div><div class="invrow tot"><span>Sum inkl. mva</span><span>'+kr(inkl(sum))+'</span></div>':'')
+      : '<div class="tag">Ingen leverte jobbar denne månaden enno.</div>';
+    $('invCopy').hidden=!L.length;
+  }
+  function invText(){ var L=invLines(), sum=L.reduce(function(a,it){return a+(+it.o.honorar||0)},0), mva=myMva();
+    var t='Faktura til '+FAKTURA.namn+', org.nr. '+FAKTURA.orgnr+'\nÉi linje per oppdrag.\nFrå: '+((profile&&profile.namn)||'')+'\nPeriode: '+MND[now.getMonth()]+' '+now.getFullYear()+'\n\n';
+    L.forEach(function(it){ t+=shortDate(it.o.dato)+'  '+it.o.adresse+'  '+(hasNum(it.o.honorar)?kr(it.o.honorar):'ikkje sett')+'\n'; });
+    t+='\nSum'+(mva?' eks. mva':'')+': '+kr(sum)+(mva?'\nMva 25 %: '+kr(sum*MVA)+'\nSum inkl. mva: '+kr(inkl(sum)):'')+'\n';
+    return t; }
+  // ---- nye oppdrag (partnar) ----
+  function renderOffers(){
+    var pnl=$('offerPanel'); if(!pnl) return;
+    if(isOwner||!offers.length){ pnl.hidden=true; return; }
+    pnl.hidden=false;
+    $('offerCount').textContent=String(offers.length);
+    $('offers').innerHTML=offers.map(function(r){
+      var dg=Array.isArray(r.dagar)?r.dagar:[], dates=dg.map(function(d){return d.dato});
+      var c=conflicts(dates,me,'',null);
+      return '<div class="offer">'+
+        '<div class="offer-h"><div><b>'+esc(r.tittel)+'</b><span>'+esc([r.kunde,r.kategori,r.omrade].filter(Boolean).join(' · '))+'</span></div>'+
+        '<div class="offer-pay"><span>Honorar</span><b>'+esc(hasNum(HON[r.id])?kr(HON[r.id]):'Ikkje sett')+'</b>'+(hasNum(HON[r.id])&&myMva()?'<span>+ mva = '+kr(inkl(HON[r.id]))+'</span>':'')+'</div></div>'+
+        '<div class="tag">'+(dg.length?dg.map(function(d){return shortDate(d.dato)+(d.tid?' kl. '+d.tid:'')}).join(' · '):'Dato ikkje sett')+'</div>'+
+        (r.notat?'<div class="tag" style="white-space:pre-wrap">'+esc(r.notat)+'</div>':'')+
+        (c.length?'<div class="warn"><b>Du har noko desse dagane:</b><br>'+c.map(esc).join('<br>')+'</div>':'')+
+        '<div class="offer-a"><button class="btn primary" type="button" data-take="'+r.id+'">Ta jobben</button><button class="btn" type="button" data-decline="'+r.id+'">Avslå</button></div>'+
+      '</div>';
+    }).join('');
+  }
+  async function offerAction(id,take){
+    try{ var r=await sb.rpc(take?'ta_jobb':'avsla_jobb',{p_id:id}); if(r.error) throw r.error;
+      toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått'); reload();
+    }catch(err){ toast(writeErr(err)); }
+  }
+
+  // Partnaren kan berre flytte jobben fram til levert. Rettingar, godkjent og fakturert set Jacob.
+  function statusChoices(){ return isOwner ? STATUSES : STATUSES.filter(function(s){return ['booka','filma','levert'].indexOf(s.k)>=0}); }
+  var STEPS=['booka','filma','levert','godkjent','fakturert'];
+  function stepIx(s){ if(s==='retting') return 2; if(s==='tilbod') return -1; return STEPS.indexOf(s); }
+  function progress(o){
+    var ix=stepIx(o.status), n=isOwner?5:4, h='<div class="prog" title="'+esc((SL[o.status]||{}).l||'')+'">';
+    for(var i=0;i<n;i++){ h+='<i class="'+(i<=ix?'on':'')+(i===ix&&o.status==='retting'?' bad':'')+'"></i>'; }
+    return h+'</div>';
+  }
+  function renderTable(){
+    var list=view.filter(function(it){ var s=it.o.status;
+      if(kpi&&kpi!=='alle') return kpiMatch(it);
+      if(listMode==='aktive') return s!=='fakturert';
+      if(listMode==='fakturert') return s==='fakturert';
+      return true; })
+      .sort(function(a,b){ var x=String(a.o.dato||'9999'), y=String(b.o.dato||'9999'); return listMode==='fakturert'? y.localeCompare(x) : x.localeCompare(y); });
+    $('listTitle').firstChild.nodeValue = isOwner?'Oppdrag':'Mine jobbar';
+    $('jobcount').innerHTML=(list.length?String(list.length):'')+(kpi?' · '+KPIL[kpi]+'<button type="button" class="clearf" data-clearkpi>Vis alle</button>':'');
+    [].forEach.call(document.querySelectorAll('[data-lmode]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-lmode')===listMode&&!kpi?'true':'false')});
+    if(!items.length){ $('tbl').innerHTML='<tr><td class="empty">Ingen jobbar enno. Trykk «+ Nytt oppdrag», eller vel ein dag i kalenderen.</td></tr>'; return; }
+    if(!list.length){ $('tbl').innerHTML='<tr><td class="empty">'+(listMode==='fakturert'&&!kpi?'Ingen fakturerte jobbar enno.':'Ingen jobbar her.')+'</td></tr>'; return; }
+    var ch=statusChoices();
+    var opts=function(cur){var l=ch.slice(); if(!SL[cur]||!ch.some(function(s){return s.k===cur})) l=l.concat([SL[cur]||STATUSES[0]]); return l.map(function(s){return '<option value="'+s.k+'"'+(s.k===cur?' selected':'')+'>'+s.l+'</option>'}).join('')};
+    var h='<thead><tr><th>Dato</th><th>Oppdrag</th><th>'+(isOwner?'Fotograf':'Type')+'</th><th>Framdrift</th>'+(isOwner?'<th>Faktura</th>':'<th>Video</th>')+'</tr></thead><tbody>';
+    list.forEach(function(it){ var o=it.o, s=o.status;
+      var third = isOwner ? esc(o.fotograf||'–')+'<span class="sub2">'+esc(o.omrade||'')+'</span>' : esc(o.type||'–')+'<span class="sub2">'+esc(hasNum(o.honorar)?kr(o.honorar)+(myMva()?' + mva':''):'')+'</span>';
+      var fifth = isOwner
+        ? (s==='fakturert'?'<span class="inv ok">✓ Fakturert</span>':(s==='godkjent'?'<span class="inv due">Klar til faktura</span>':'<span class="inv">Ikkje enno</span>'))+(hasNum(o.pris)?'<span class="sub2">'+kr(o.pris)+(hasNum(o.honorar)?' · forteneste '+kr(o.pris-(+o.honorar||0)):'')+'</span>':'')
+        : (WORK.indexOf(s)>=0?'<button type="button" class="btn lever" data-lever="'+esc(it.key)+'">Lever video</button>':(o.lenke?'Levert':'–'));
+      h+='<tr class="job" data-open="'+esc(it.key)+'">'+
+        '<td class="c-date num">'+esc(fmtDays(o))+'</td>'+
+        '<td class="c-addr addr"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc([o.kunde,isOwner?o.type:''].filter(Boolean).join(' · '))+'</span></td>'+
+        '<td class="c-type tag">'+third+'</td>'+
+        '<td class="c-stat">'+progress(o)+'<select class="statsel" style="--c:'+sc(s)+'" data-status="'+esc(it.key)+'" aria-label="Status">'+opts(s)+'</select></td>'+
+        '<td class="c-foto tag">'+fifth+'</td>'+
+        '<td class="meta-m">'+esc([fmtDays(o),isOwner?o.fotograf:'',o.omrade].filter(function(x){return x&&x!=='–'}).join(' · '))+(isOwner?' · '+(s==='fakturert'?'✓ Fakturert':(s==='godkjent'?'Klar til faktura':'Ikkje fakturert')):'')+'</td>'+
+      '</tr>';
+    });
+    $('tbl').innerHTML=h+'</tbody>';
+  }
+
+  // ---- skuff ----
+  function segHTML(name,vals,cur){ return '<div class="seg full" role="group">'+vals.map(function(v){return '<button type="button" data-seg="'+name+'" data-val="'+esc(v)+'" aria-pressed="'+(v===cur?'true':'false')+'">'+esc(v)+'</button>'}).join('')+'</div>'; }
+  // ---- kapasitet og opptatt ----
+  function blockList(){
+    return blocks.filter(function(b){ if(!isOwner) return b.fotograf_id===me; return area==='Alle'||((photogs[b.fotograf_id]||{}).omrade===area); })
+      .map(function(b){ return {key:b.id,uid:b.fotograf_id,fra:b.fra,til:b.til||b.fra,notat:b.notat}; }); }
+  function blockDays(b){ var r=[]; if(!b.fra) return r; var p=b.fra.split('-'), x=new Date(+p[0],+p[1]-1,+p[2]), end=b.til&&b.til>=b.fra?b.til:b.fra; for(var i=0;i<62;i++){ var k=iso(x.getFullYear(),x.getMonth(),x.getDate()); if(k>end) break; r.push(k); x.setDate(x.getDate()+1); } return r; }
+  function blocksOn(day,uid){ return blockList().filter(function(b){ return (!uid||b.uid===uid) && blockDays(b).indexOf(day)>=0; }); }
+  function capRows(){
+    var rows=Object.keys(photogs).filter(function(u){return area==='Alle'||photogs[u].omrade===area}).map(function(u){return {uid:u,namn:photogs[u].namn||'Fotograf',omr:photogs[u].omrade||''}});
+    var names={}; view.forEach(function(it){ if(!it.uid&&it.o.fotograf&&!it.o.utlyst) names[it.o.fotograf]=it.o.omrade||''; });
+    Object.keys(names).forEach(function(n){ rows.push({uid:null,namn:n,omr:names[n]}); });
+    return rows.sort(function(a,b){return a.namn.localeCompare(b.namn)}); }
+  function rowJobs(r,day){ return items.filter(function(it){ return (r.uid?it.uid===r.uid:(!it.uid&&it.o.fotograf===r.namn)) && onDay(it.o,day); }); }
+  function weekNo(d){ var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); var dn=(t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-dn+3); var f=new Date(Date.UTC(t.getUTCFullYear(),0,4)); return 1+Math.round(((t-f)/864e5-3+((f.getUTCDay()+6)%7))/7); }
+  function renderCap(){
+    if(!isOwner) return;
+    var m=new Date(now.getFullYear(),now.getMonth(),now.getDate()-((now.getDay()+6)%7)+7*capOff), ds=[];
+    for(var i=0;i<7;i++){ var x=new Date(m.getFullYear(),m.getMonth(),m.getDate()+i); ds.push(iso(x.getFullYear(),x.getMonth(),x.getDate())); }
+    $('capTitle').innerHTML=(capOff===0?'Denne veka':(capOff===1?'Neste veke':'Veke '+weekNo(m)))+' <span class="sub">veke '+weekNo(m)+'</span>';
+    var rows=capRows();
+    if(!rows.length){ $('capTbl').innerHTML='<tr><td class="empty">Ingen fotografar enno. Dei dukkar opp her når dei har logga inn, eller når du set ein fotograf på ein jobb.</td></tr>'; return; }
+    var DK=['Må','Ty','On','To','Fr','La','Sø'];
+    var h='<thead><tr><th>Fotograf</th>'+ds.map(function(d,i){var p=d.split('-');return '<th'+(d===TODAY?' class="today"':'')+'>'+DK[i]+' '+(+p[2])+'.'+(+p[1])+'</th>'}).join('')+'</tr></thead><tbody>';
+    rows.forEach(function(r){
+      h+='<tr><td><b style="font-weight:500">'+esc(r.namn)+'</b><br><span class="tag">'+esc(r.omr||'')+'</span></td>';
+      ds.forEach(function(d){
+        var js=rowJobs(r,d), bl=r.uid?blocksOn(d,r.uid):[];
+        var c=bl.map(function(b){return '<span class="capc busy" title="'+esc(b.notat||'')+'">Opptatt'+(b.notat?' · '+esc(b.notat):'')+'</span>'}).join('')+
+          js.map(function(it){var t=onDay(it.o,d).tid;return '<span class="capc job" data-open="'+esc(it.key)+'" title="'+esc(it.o.adresse)+'"><i class="dot" style="--c:'+sc(it.o.status)+'"></i>'+(t?esc(t)+' ':'')+esc(it.o.adresse||'')+'</span>'}).join('');
+        var dbl=(js.length+bl.length)>1;
+        if(!c) c='<button type="button" class="capc free" data-capcell="'+d+'" data-uid="'+esc(r.uid||'')+'" data-namn="'+esc(r.uid?'':r.namn)+'" aria-label="Book '+esc(r.namn)+'">+</button>';
+        h+='<td'+(dbl?' class="dbl"':'')+'>'+c+(dbl?'<span class="dblnote">Dobbelbooka</span>':'')+'</td>';
+      });
+      h+='</tr>';
+    });
+    $('capTbl').innerHTML=h+'</tbody>';
+  }
+  function conflicts(dates,uid,name,exKey){
+    var out=[];
+    items.forEach(function(it){ if(it.key===exKey) return; var same=uid?it.uid===uid:(!it.uid&&name&&it.o.fotograf===name); if(!same) return;
+      days(it.o).forEach(function(d){ if(dates.indexOf(d.dato)>=0) out.push(shortDate(d.dato)+': '+(it.o.adresse||'anna oppdrag')+(d.tid?' kl. '+d.tid:'')); }); });
+    if(uid) blockList().forEach(function(b){ if(b.uid!==uid) return; blockDays(b).forEach(function(d){ if(dates.indexOf(d)>=0) out.push(shortDate(d)+': merka som opptatt'+(b.notat?' ('+b.notat+')':'')); }); });
+    return out; }
+  function formDates(){ return [].map.call(document.querySelectorAll('#f-days .d-dato'),function(i){return i.value}).filter(Boolean); }
+  function isMeg(n){ n=String(n||'').trim().toLowerCase(); return !n||n===MEG.toLowerCase()||n==='aroy film'||n==='aroyfilm'; }
+  function formWho(){ if(!isOwner) return {uid:me,name:''}; var s=$('f-foto'); var u=s?s.value:'';
+    if(u==='_meg') return {uid:null,name:MEG};
+    if(u==='_annan') return {uid:null,name:(($('f-fotograf')||{}).value||'').trim()};
+    if(u==='_utlys') return {uid:null,name:''};
+    return {uid:u||null,name:''}; }
+  function fotoUI(){ var v=$('f-foto').value; $('f-fotofri-w').hidden=v!=='_annan'; $('f-utlys-w').hidden=v.charAt(0)==='_'; $('f-hon-w').hidden=v==='_meg'; if(v==='_meg') $('f-hon').value=''; priceSum(); }
+  function checkConflict(){ var w=$('f-warn'); if(!w) return []; var who=formWho(); var c=(who.uid||who.name)?conflicts(formDates(),who.uid,who.name,editKey):[];
+    warnOK=false; $('saveBtn').textContent='Lagre';
+    if(c.length){ w.innerHTML='<b>Mogleg dobbelbooking.</b> '+esc(isOwner?'Fotografen har':'Du har')+' allereie:<br>'+c.map(esc).join('<br>'); w.hidden=false; } else w.hidden=true;
+    return c; }
+  function openBlock(key){
+    mode='blk'; editKey=key||null;
+    var b=key?blockList().find(function(x){return x.key===key}):null;
+    $('dtitle').textContent=b?'Opptatt':'Merk meg opptatt';
+    $('dbody').innerHTML='<p class="tag" style="white-space:normal">Jacob ser at du ikkje er ledig desse dagane, så du ikkje blir dobbelbooka. Han ser òg notatet.</p>'+
+      '<div class="two"><label class="fld"><span>Frå</span><input type="date" id="b-fra" value="'+esc(b?b.fra:TODAY)+'"></label><label class="fld"><span>Til</span><input type="date" id="b-til" value="'+esc(b?b.til:'')+'"></label></div>'+
+      '<label class="fld"><span>Notat (valfritt)</span><input id="b-notat" value="'+esc(b?b.notat:'')+'" placeholder="Ferie, anna jobb"></label>';
+    $('delBtn').hidden=!b; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed; $('saveBtn').textContent='Lagre';
+    $('scrim').hidden=false; $('drawer').hidden=false;
+  }
+  function dayRow(d){ return '<div class="two dayrow"><input type="date" class="d-dato" aria-label="Dato" value="'+esc(d.dato)+'"><div style="display:flex;gap:6px"><input type="time" class="d-tid" aria-label="Klokkeslett" value="'+esc(d.tid)+'" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface)"><button type="button" class="btn ghost icon" data-delrow aria-label="Fjern dag" style="height:auto">✕</button></div></div>'; }
+  function openDrawer(key,preset,focusLink){
+    editKey=key||null; mode='job'; warnOK=false; $('saveBtn').textContent='Lagre';
+    var it=key?find(key):null;
+    var o = it ? Object.assign({},it.o) : Object.assign({status:'booka',type:'Boligfilm',omrade:isOwner?(area!=='Alle'?area:''):(profile&&profile.omrade)},preset||{});
+    var k0=o.kategori||catOf(o.type)||'Eigedom'; draft={omrade:o.omrade||'', uid: it?it.uid:null, kat:k0, type:k0, newType:false};
+    $('dtitle').textContent = it ? (o.adresse||'Oppdrag') : 'Nytt oppdrag';
+    var fotoField;
+    if(isOwner){
+      // Kven filmar: Meg / ein partnar / lys ut til området / annan (fritekst).
+      var uids=Object.keys(photogs).filter(function(u){return u!==me});
+      var isUtl = !!(it&&it.o.utlyst), cur;
+      if(it&&it.uid) cur=it.uid;
+      else if(isUtl) cur=it.o.utlyst_til||'_utlys';
+      else if(preset&&preset._uid) cur=preset._uid;
+      else cur = isMeg(o.fotograf) ? '_meg' : '_annan';
+      var ask = isUtl && !!it.o.utlyst_til;
+      fotoField='<label class="fld"><span>Kven filmar</span><select id="f-foto">'+
+        '<option value="_meg"'+(cur==='_meg'?' selected':'')+'>Meg (Aroy Film). Berre du ser oppdraget</option>'+
+        uids.map(function(u){return '<option value="'+esc(u)+'"'+(u===cur?' selected':'')+'>'+esc(photogs[u].namn||'Fotograf')+(photogs[u].omrade?' · '+esc(photogs[u].omrade):'')+'</option>'}).join('')+
+        '<option value="_utlys"'+(cur==='_utlys'?' selected':'')+'>Lys ut til alle i området</option>'+
+        '<option value="_annan"'+(cur==='_annan'?' selected':'')+'>Annan (skriv namn)</option></select></label>'+
+        '<label class="chk2" id="f-utlys-w"'+(uids.indexOf(cur)>=0?'':' hidden')+'><input type="checkbox" id="f-utlys"'+(ask?' checked':'')+'> <span>Spør fotografen først. Jobben blir hans når han trykkjer «Ta jobben».</span></label>'+
+        '<label class="fld" id="f-fotofri-w"'+(cur==='_annan'?'':' hidden')+'><span>Namn</span><input id="f-fotograf" value="'+esc(cur==='_annan'?(o.fotograf||''):'')+'" placeholder="Namn på fotograf"></label>'+
+        '<div class="two"><label class="fld"><span>Kundepris eks. mva</span><input type="number" min="0" step="100" inputmode="numeric" id="f-pris" value="'+esc(hasNum(o.pris)?o.pris:'')+'" placeholder="0"></label>'+
+        '<label class="fld" id="f-hon-w"'+(cur==='_meg'?' hidden':'')+'><span>Honorar til fotograf eks. mva</span><input type="number" min="0" step="100" inputmode="numeric" id="f-hon" value="'+esc(hasNum(o.honorar)?o.honorar:'')+'" placeholder="0"></label></div>'+
+        '<div class="hint" id="f-sum"></div>';
+    } else fotoField='<div class="two"><div class="fld"><span>Fotograf</span><div style="padding:9px 0;font-weight:600">'+esc((profile&&profile.namn)||'Deg')+' <span class="hint">(deg)</span></div></div><div class="fld"><span>Honorar</span><div style="padding:9px 0;font-weight:600">'+esc(honText(o.honorar,myMva()))+'</div></div></div>';
+    var st=statusChoices(); if(!st.some(function(x){return x.k===o.status})&&SL[o.status]) st=st.concat([SL[o.status]]);
+    $('dbody').innerHTML=
+      '<label class="fld big"><span>Tittel</span><input id="f-adresse" required placeholder="Tittel på oppdrag" value="'+esc(o.adresse)+'" autocomplete="off"></label>'+
+      '<label class="fld"><span>Kunde</span><input id="f-kunde" list="dl-kunde" placeholder="Vel eller skriv ny kunde" value="'+esc(o.kunde)+'" autocomplete="off">'+dl('dl-kunde',uniq('kunde'))+'</label>'+
+      (isOwner?'<div class="fld"><span>Område</span>'+segHTML('omrade',AREAS,o.omrade)+'</div>':'')+
+      '<div class="fld"><span>Type</span><div id="f-typebox">'+typeHTML()+'</div></div>'+
+      '<div class="fld"><span>Opptaksdagar</span><div id="f-days" style="display:flex;flex-direction:column;gap:8px">'+(days(o).length?days(o):[{dato:'',tid:''}]).map(dayRow).join('')+'</div><div><button type="button" class="btn" data-addrow>+ Legg til dag</button></div></div>'+
+      fotoField+
+      '<div class="warn" id="f-warn" hidden></div>'+
+      '<label class="fld"><span>Status</span><select id="f-status">'+st.map(function(s){return '<option value="'+s.k+'"'+(s.k===o.status?' selected':'')+'>'+s.l+'</option>'}).join('')+'</select></label>'+
+      '<label class="fld"><span>Lenke til video (Frame.io). Når lenka er lagt inn, blir jobben levert til Jacob</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>'+
+      (o.lenke&&/^https?:\/\//.test(o.lenke)?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
+      '<label class="fld"><span>Notat</span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>';
+    $('delBtn').hidden=!it||PV; $('saveBtn').hidden=PV; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed;
+    setTimeout(function(){ checkConflict(); priceSum(); },0);
+    $('scrim').hidden=false; $('drawer').hidden=false;
+    setTimeout(function(){ if(focusLink) $('f-lenke').focus(); else if(!it) $('f-adresse').focus(); },30);
+  }
+  function priceSum(){ var e=$('f-sum'); if(!e) return; var p=$('f-pris').value, h=$('f-hon').value; var t=[];
+    if(p!=='') t.push('Kunde betaler '+kr(inkl(p))+' inkl. mva');
+    if(p!==''&&h!=='') t.push('Forteneste '+kr(p-h)+' eks. mva');
+    e.textContent=t.join(' · '); }
+  function closeDrawer(){ $('drawer').hidden=true; if($('info').hidden) $('scrim').hidden=true; editKey=null; }
+  function openInfo(){ renderInvoice(); $('scrim').hidden=false; $('info').hidden=false; }
+  function closeInfo(){ $('info').hidden=true; if($('drawer').hidden) $('scrim').hidden=true; }
+  // ---- førehandsvising: sjå som partnar ----
+  var PV=null;
+  function enterPreview(uid){
+    var p=allProfiles.find(function(x){return x.id===uid}); if(!p) return;
+    PV={me:me,profile:profile}; me=uid; profile=p; isOwner=false; kpi=null; selDay=null;
+    $('pvName').textContent=p.namn||p.email; $('pvBar').hidden=false;
+    rebuild(); window.scrollTo(0,0);
+  }
+  function exitPreview(){
+    if(!PV) return; me=PV.me; profile=PV.profile; PV=null; isOwner=true; kpi=null;
+    $('pvBar').hidden=true; OV='brukarar'; rebuild();
+  }
+  async function stamp(o){ o.oppdatert=new Date().toISOString(); if(me) o.av=me; return o; }
+  function writeErr(err){ var m=(err&&(err.message||''))+''; return (err&&err.code==='42501')||/row-level security/i.test(m)?'Du har ikkje løyve til dette.':'Klarte ikkje lagre. Prøv igjen.'; }
+  async function run(q){ var r=await q; if(r.error) throw r.error; return r; }
+  function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  $('form').addEventListener('submit',async function(e){
+    e.preventDefault(); if(!sb||PV) return;
+    if(mode==='blk'){
+      var fra=$('b-fra').value, til=$('b-til').value||fra; if(!fra){ $('b-fra').focus(); return; } if(til<fra) til=fra;
+      var bo={fra:fra,til:til,notat:$('b-notat').value.trim()};
+      try{ if(editKey) await run(sb.from('opptatt').update(bo).eq('id',editKey)); else await run(sb.from('opptatt').insert(bo)); closeDrawer(); toast('Merka som opptatt'); reload(); }catch(err){ toast(writeErr(err)); }
+      return;
+    }
+    if(!warnOK && checkConflict().length){ warnOK=true; $('saveBtn').textContent='Lagre likevel'; $('f-warn').scrollIntoView({block:'center',behavior:'smooth'}); return; }
+    var g=function(f){var el=$('f-'+f);return el?el.value.trim():''};
+    var it=editKey?find(editKey):null;
+    var dg=[].map.call(document.querySelectorAll('#f-days .dayrow'),function(r){return {dato:r.querySelector('.d-dato').value,tid:r.querySelector('.d-tid').value}}).filter(function(x){return x.dato}).sort(function(a,b){return (a.dato+a.tid).localeCompare(b.dato+b.tid)});
+    var nt=$('f-newtype'); if(nt&&nt.value.trim()){ draft.kat=nt.value.trim(); }
+    var row={tittel:g('adresse'),kunde:g('kunde'),kategori:draft.kat||'',dagar:dg,dato:dg.length?dg[0].dato:null,status:g('status'),lenke:g('lenke'),notat:g('notat'),oppdatert:new Date().toISOString(),oppdatert_av:me};
+    if(!row.tittel){ $('f-adresse').focus(); return; }
+    // Ny lenke på ein jobb som ventar på video = levert (og rettingane er gjort).
+    var autoLev = row.lenke && row.lenke!==((it&&it.o.lenke)||'') && WORK.indexOf(row.status)>=0;
+    if(autoLev) row.status='levert';
+    row.retting = row.status==='retting'; if(row.retting) row.status='levert';
+    if(!isOwner&&it&&it.o.status==='retting'&&!autoLev&&row.status==='levert'){ row.retting=true; }   // partnaren kan ikkje fjerne rettingar utan ny video
+    var priceIn=null, honIn=null;
+    if(isOwner){
+      var sel=$('f-foto').value, uid=sel.charAt(0)==='_'?'':sel, utl=sel==='_utlys'||(!!uid&&$('f-utlys').checked);
+      row.omrade=draft.omrade||(uid?((photogs[uid]||{}).omrade||''):'');
+      if(utl){
+        if(!uid&&!row.omrade){ toast('Vel område for å lyse ut jobben'); return; }
+        row.utlyst=true; row.fotograf_id=null; row.fotograf_namn=''; row.utlyst_til=uid||null; row.utlyst_omrade=uid?'':row.omrade;
+      } else { row.utlyst=false; row.utlyst_til=null; row.utlyst_omrade=''; row.fotograf_id=uid||null; row.fotograf_namn=uid?'':(sel==='_meg'?MEG:g('fotograf')); }
+      priceIn=$('f-pris').value; honIn=sel==='_meg'?'':$('f-hon').value;
+    } else {
+      row.fotograf_id=me; row.fotograf_namn=''; row.omrade=(it&&it.o.omrade)||(profile&&profile.omrade)||'';
+    }
+    try{
+      var id=it?it.key:null;
+      if(it) await run(sb.from('oppdrag').update(row).eq('id',id)); else { var ins=await run(sb.from('oppdrag').insert(row).select('id').single()); id=ins.data.id; }
+      if(isOwner){
+        if(priceIn!==''||hasNum(PRIS[id])) await run(sb.from('oppdrag_pris').upsert({oppdrag_id:id,kundepris:+priceIn||0}));
+        if(honIn!==''||hasNum(HON[id])) await run(sb.from('oppdrag_honorar').upsert({oppdrag_id:id,belop:+honIn||0}));
+        if(row.utlyst&&it&&!it.o.utlyst) await sb.from('avslag').delete().eq('oppdrag_id',id);
+      }
+      closeDrawer(); toast(autoLev?'Video levert. Jacob får beskjed på tavla':(it?'Lagra':'Oppdraget er lagt til')); reload();
+    }catch(err){ toast(writeErr(err)); }
+  });
+  $('delBtn').addEventListener('click',async function(){
+    var b=$('delBtn');
+    if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen for å slette'; return; }
+    var tbl=mode==='blk'?'opptatt':'oppdrag', id=editKey; closeDrawer();
+    try{ await run(sb.from(tbl).delete().eq('id',id)); toast('Sletta'); reload(); }catch(err){ toast('Klarte ikkje slette.'); }
+  });
+  $('newBtn').addEventListener('click',function(){ openDrawer(null); });
+  $('infoBtn').addEventListener('click',openInfo);
+  $('invCopy').addEventListener('click',function(){ var t=invText(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast('Kopiert. Lim inn i fakturaen din.')}).catch(function(){ window.prompt&&0; toast('Klarte ikkje kopiere'); }); });
+  $('blockBtn').addEventListener('click',function(){ openBlock(null); });
+  $('scrim').addEventListener('click',function(){ closeDrawer(); closeInfo(); });
+  document.addEventListener('input',function(e){ if(e.target.id==='kSearch'){ kQ=e.target.value; renderKundar(); return; } if(e.target.id==='f-pris'||e.target.id==='f-hon') priceSum(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(!$('drawer').hidden) closeDrawer(); else if(!$('info').hidden) closeInfo(); } });
+
+  document.addEventListener('click',function(e){
+    var t=e.target, b;
+    if(t.closest('select')) return;
+    if((b=t.closest('[data-close]'))){ closeDrawer(); return; }
+    if((b=t.closest('[data-iclose]'))){ closeInfo(); return; }
+    if((b=t.closest('[data-backup]'))){ backup(b.getAttribute('data-backup')).catch(function(){ toast('Klarte ikkje lage reservekopi.'); }); return; }
+    if((b=t.closest('[data-ksave]'))){ kSave(); return; }
+    if((b=t.closest('[data-kclose]'))){ openK=null; newK=false; renderKundar(); return; }
+    if((b=t.closest('[data-knew]'))){ newK=true; openK=null; renderKundar(); setTimeout(function(){ $('k-namn')&&$('k-namn').focus(); },20); return; }
+    if((b=t.closest('[data-knewjob]'))){ openDrawer(null,{kunde:b.getAttribute('data-knewjob')}); return; }
+    if((b=t.closest('[data-kopen]'))){ var kid=b.getAttribute('data-kopen'); openK=(openK===kid?null:kid); newK=false; renderKundar(); return; }
+    if(t.closest('.kdet')&&!t.closest('[data-open]')) return;
+    if((b=t.closest('[data-pv]'))){ enterPreview(b.getAttribute('data-pv')); return; }
+    if((b=t.closest('[data-pvexit]'))){ exitPreview(); return; }
+    if(PV&&t.closest('[data-take],[data-decline],[data-lever],[data-addday],[data-capcell],[data-blk],[data-addrow],[data-delrow],#invCopy')){ toast('Førehandsvising. Ingenting blir endra.'); return; }
+    if((b=t.closest('[data-logout]'))){ sb.auth.signOut().then(function(){ location.reload(); }); return; }
+    if((b=t.closest('[data-ov]'))){ OV=b.getAttribute('data-ov'); try{localStorage.setItem('aroy-side',OV)}catch(err){} kpi=null; openK=null; newK=false; render(); if(OV==='brukarar') renderUsers(); window.scrollTo(0,0); return; }
+    if((b=t.closest('[data-uact]'))){ userAction(b); return; }
+    if((b=t.closest('[data-take]'))){ offerAction(b.getAttribute('data-take'),true); return; }
+    if((b=t.closest('[data-decline]'))){ if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen for å avslå'; return; } offerAction(b.getAttribute('data-decline'),false); return; }
+    if((b=t.closest('[data-kat]'))){ draft.kat=b.getAttribute('data-kat'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
+    if((b=t.closest('[data-typ]'))){ draft.type=b.getAttribute('data-typ'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
+    if((b=t.closest('[data-newtyp]'))){ draft.newType=true; draft.kat=''; $('f-typebox').innerHTML=typeHTML(); $('f-newtype').focus(); return; }
+    if((b=t.closest('[data-lmode]'))){ listMode=b.getAttribute('data-lmode'); kpi=null; render(); return; }
+    if((b=t.closest('[data-cap]'))){ var cv=+b.getAttribute('data-cap'); capOff = cv===0?0:capOff+cv; renderCap(); return; }
+    if((b=t.closest('[data-capcell]'))){ openDrawer(null,{dato:b.getAttribute('data-capcell'),_uid:b.getAttribute('data-uid'),fotograf:b.getAttribute('data-namn'),omrade:(photogs[b.getAttribute('data-uid')]||{}).omrade}); return; }
+    if((b=t.closest('[data-blk]'))){ openBlock(b.getAttribute('data-blk')); return; }
+    if((b=t.closest('[data-oomr]'))){ [].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-pressed',x===b?'true':'false')}); return; }
+    if((b=t.closest('[data-kpi]'))){ var kk=b.getAttribute('data-kpi'); if(isOwner&&OV==='idag'){ OV='oversikt'; kpi=kk; } else kpi=(kpi===kk?null:kk); render(); if(kpi) $('tbl').closest('.panel').scrollIntoView({behavior:'smooth',block:'start'}); return; }
+    if((b=t.closest('[data-clearkpi]'))){ kpi=null; render(); return; }
+    if((b=t.closest('[data-seg]'))){ draft[b.getAttribute('data-seg')]=b.getAttribute('data-val'); [].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-pressed',x===b?'true':'false')}); return; }
+    if((b=t.closest('[data-area]'))){ area=b.getAttribute('data-area'); try{localStorage.setItem('aroy-omrade',area)}catch(err){} apply(); return; }
+    if((b=t.closest('[data-cal]'))){ var v=+b.getAttribute('data-cal'); if(v===0){calY=now.getFullYear();calM=now.getMonth();selDay=TODAY;} else {calM+=v; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;}} renderCal(); return; }
+    if((b=t.closest('[data-addday]'))){ openDrawer(null,{dato:b.getAttribute('data-addday')}); return; }
+    if((b=t.closest('[data-addrow]'))){ var last=[].slice.call(document.querySelectorAll('#f-days .d-dato')).pop(), nd=''; if(last&&last.value){ var q=last.value.split('-'), x=new Date(+q[0],+q[1]-1,+q[2]+1); nd=iso(x.getFullYear(),x.getMonth(),x.getDate()); } $('f-days').insertAdjacentHTML('beforeend',dayRow({dato:nd,tid:''})); return; }
+    if((b=t.closest('[data-delrow]'))){ var rows=document.querySelectorAll('#f-days .dayrow'); if(rows.length>1) b.closest('.dayrow').remove(); else { b.closest('.dayrow').querySelector('.d-dato').value=''; b.closest('.dayrow').querySelector('.d-tid').value=''; } return; }
+    if((b=t.closest('[data-lever]'))){ openDrawer(b.getAttribute('data-lever'),null,true); return; }
+    if((b=t.closest('[data-open]'))){ openDrawer(b.getAttribute('data-open')); return; }
+    if((b=t.closest('[data-day]'))){ var k=b.getAttribute('data-day'); selDay=(selDay===k?null:k); renderCal(); return; }
+  });
+  document.addEventListener('change',async function(e){
+    if(e.target.id==='f-foto'){ fotoUI(); checkConflict(); return; }
+    if(e.target.id==='f-utlys') return;
+    if(e.target.classList&&e.target.classList.contains('d-dato')){ checkConflict(); return; }
+    if(e.target.id==='f-fotograf'){ checkConflict(); return; }
+    if(e.target.getAttribute('data-urolle')||e.target.getAttribute('data-uomr')){ userChange(e.target); return; }
+    var key=e.target.getAttribute('data-status'); if(!key||!sb) return;
+    if(PV){ toast('Førehandsvising. Ingenting blir endra.'); render(); return; }
+    var it=find(key); if(!it) return;
+    e.target.style.setProperty('--c',sc(e.target.value));
+    var nv=e.target.value, patch={status:nv==='retting'?'levert':nv,retting:nv==='retting',oppdatert:new Date().toISOString(),oppdatert_av:me};
+    try{ await run(sb.from('oppdrag').update(patch).eq('id',key)); toast('Status: '+SL[nv].l); reload(); }
+    catch(err){ toast(writeErr(err)); }
+  });
+
+  // ---- brukarar (admin) ----
+  function renderUsers(){
+    if(!isOwner) return;
+    var cnt={}; rows.forEach(function(r){ if(r.fotograf_id) cnt[r.fotograf_id]=(cnt[r.fotograf_id]||0)+1; });
+    var seen={}, list=[];
+    allProfiles.forEach(function(p){ seen[(p.email||'').toLowerCase()]=1; list.push({p:p}); });
+    invites.forEach(function(i){ if(!seen[i.email.toLowerCase()]) list.push({inv:i}); });
+    $('ucount').textContent=String(list.length);
+    var omr=function(cur,attr,dis){ return '<select '+attr+(dis?' disabled':'')+'>'+['','Oslo','Bergen','Sogn'].map(function(a){return '<option value="'+a+'"'+(a===cur?' selected':'')+'>'+(a||'Inga')+'</option>'}).join('')+'</select>'; };
+    var rol=function(cur,attr,dis){ return '<select '+attr+(dis?' disabled':'')+'>'+[['fotograf','Fotograf'],['admin','Admin'],['ingen','Ingen tilgang']].map(function(r){return '<option value="'+r[0]+'"'+(r[0]===cur?' selected':'')+'>'+r[1]+'</option>'}).join('')+'</select>'; };
+    var h='<thead><tr><th>Brukar</th><th>Rolle</th><th>Område</th><th>MVA</th><th>Status</th><th>Jobbar</th><th></th></tr></thead><tbody>';
+    list.forEach(function(x){
+      if(x.p){ var p=x.p, self=p.id===me;
+        var st = p.rolle==='ingen'?'<span class="pill2 off">Ingen tilgang</span>':(p.aktiv?'<span class="pill2 on">Aktiv</span>':'<span class="pill2 off">På pause</span>');
+        h+='<tr><td><b style="font-weight:600">'+esc(p.namn||'Utan namn')+(self?' <span class="hint">(deg)</span>':'')+'</b><br><span class="tag">'+esc(p.email)+'</span></td>'+
+          '<td>'+rol(p.rolle,'data-urolle="'+p.id+'"',self)+'</td><td>'+omr(p.omrade,'data-uomr="'+p.id+'"',false)+'</td><td><button class="pill2 '+(p.mva_registrert!==false?'on':'off')+'" data-uact="mva" data-id="'+p.id+'" type="button">'+(p.mva_registrert!==false?'Registrert':'Ikkje registrert')+'</button></td><td>'+st+'</td><td class="n">'+(cnt[p.id]||0)+'</td>'+
+          '<td style="text-align:right;white-space:nowrap">'+((p.rolle!=='ingen'&&!self)?'<button class="btn ubtn" data-pv="'+p.id+'" style="margin-right:6px">Sjå som</button>':'')+(self?'':(p.rolle==='ingen'?'<button class="btn ubtn" data-uact="gi" data-id="'+p.id+'">Gi tilgang</button>':'<button class="btn ubtn" data-uact="'+(p.aktiv?'pause':'aktiver')+'" data-id="'+p.id+'">'+(p.aktiv?'Set på pause':'Aktiver')+'</button>'))+'</td></tr>';
+      } else { var i=x.inv;
+        h+='<tr><td><b style="font-weight:600">'+esc(i.namn||'')+'</b><br><span class="tag">'+esc(i.email)+'</span></td><td class="tag">'+(i.rolle==='admin'?'Admin':'Fotograf')+'</td><td class="tag">'+esc(i.omrade||'Inga')+'</td><td class="tag">–</td>'+
+          '<td><span class="pill2 wait">Ikkje logga inn enno</span></td><td class="n">0</td><td style="text-align:right"><button class="btn ubtn danger" data-uact="avinviter" data-email="'+esc(i.email)+'">Fjern</button></td></tr>';
+      }
+    });
+    $('usersTbl').innerHTML=h+'</tbody>';
+  }
+  async function syncInvite(p,patch){ var o=Object.assign({namn:p.namn,rolle:p.rolle,omrade:p.omrade},patch); if(o.rolle==='ingen') return run(sb.from('invitasjonar').delete().eq('email',p.email)); return run(sb.from('invitasjonar').upsert({email:p.email,namn:o.namn,rolle:o.rolle,omrade:o.omrade})); }
+  async function userChange(el){
+    var id=el.getAttribute('data-urolle')||el.getAttribute('data-uomr'), p=allProfiles.find(function(x){return x.id===id}); if(!p) return;
+    var patch = el.getAttribute('data-urolle') ? {rolle:el.value} : {omrade:el.value};
+    try{ await run(sb.from('profiles').update(patch).eq('id',id)); await syncInvite(p,patch); toast('Lagra'); reload(); }catch(err){ toast(writeErr(err)); reload(); }
+  }
+  async function userAction(b){
+    var act=b.getAttribute('data-uact');
+    try{
+      if(act==='avinviter'){ await run(sb.from('invitasjonar').delete().eq('email',b.getAttribute('data-email'))); toast('Invitasjonen er fjerna'); }
+      else { var id=b.getAttribute('data-id'), p=allProfiles.find(function(x){return x.id===id});
+        if(act==='mva') await run(sb.from('profiles').update({mva_registrert:p.mva_registrert===false}).eq('id',id));
+        if(act==='pause') await run(sb.from('profiles').update({aktiv:false}).eq('id',id));
+        if(act==='aktiver') await run(sb.from('profiles').update({aktiv:true}).eq('id',id));
+        if(act==='gi'){ await run(sb.from('profiles').update({rolle:'fotograf',aktiv:true}).eq('id',id)); await syncInvite(p,{rolle:'fotograf'}); }
+        toast(act==='pause'?'Sett på pause':'Lagra'); }
+      reload();
+    }catch(err){ toast(writeErr(err)); }
+  }
+  $('invForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    var inv={email:$('i-email').value.trim().toLowerCase(),namn:$('i-namn').value.trim(),rolle:$('i-rolle').value,omrade:$('i-omrade').value};
+    if(!inv.email||!inv.namn) return;
+    try{ await run(sb.from('invitasjonar').upsert(inv)); this.reset(); toast(inv.namn+' er invitert'); reload(); }catch(err){ toast(writeErr(err)); }
+  });
+
+  // ---- oppstart ----
+  function fatal(t){ $('fatal').textContent=t; $('fatal').hidden=false; $('main').hidden=true; }
+  $('loginForm').addEventListener('submit',async function(e){
+    e.preventDefault(); var em=$('l-email').value.trim(); if(!em) return;
+    $('l-btn').disabled=true;
+    var r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.origin+location.pathname}});
+    $('l-btn').disabled=false; $('l-msg').hidden=false;
+    $('l-msg').textContent = r.error ? 'Klarte ikkje sende lenka. Sjekk e-posten og prøv igjen.' : 'Sjekk e-posten din og trykk på lenka for å logge inn.';
+  });
+  async function start(session){
+    me=session.user.id; myEmail=session.user.email;
+    var pr=await sb.from('profiles').select('*').eq('id',me).maybeSingle();
+    profile=pr.data;
+    $('login').hidden=true;
+    if(!profile||profile.rolle==='ingen'||!profile.aktiv){
+      $('na-text').textContent = profile&&!profile.aktiv&&profile.rolle!=='ingen' ? 'Tilgangen din er sett på pause. Ta kontakt med Jacob.' : 'Du er logga inn som '+myEmail+', men har ikkje fått tilgang. Be Jacob invitere deg.';
+      $('noaccess').hidden=false; return;
+    }
+    isOwner = profile.rolle==='admin';
+    if(['idag','oversikt','kundar','brukarar'].indexOf(OV)<0) OV='idag';
+    db=sb;
+    await loadAll();
+    sb.channel('tavle').on('postgres_changes',{event:'*',schema:'public',table:'oppdrag'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'opptatt'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'oppdrag_pris'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'oppdrag_honorar'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'avslag'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'kundar'},reload).subscribe();
+  }
+  var C=window.AROY_CONFIG||{};
+  if(!window.supabase||!C.url||!C.key){ fatal('Oppsettet manglar. Fyll inn config.js.'); return; }
+  sb=window.supabase.createClient(C.url,C.key);
+  sb.auth.getSession().then(function(r){ var ses=r.data&&r.data.session; if(ses) start(ses); else $('login').hidden=false; });
+  sb.auth.onAuthStateChange(function(ev,ses){ if(ev==='SIGNED_IN'&&ses&&!me){ start(ses); } });
+})();
+</script>
+</body>
+</html>

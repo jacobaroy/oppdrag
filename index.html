@@ -937,9 +937,9 @@ button,input,select,textarea{font:inherit;color:inherit}
       (ret?'<div class="warn"><b>Kunden vil ha rettingar.</b>'+(o.notat?'<br>'+esc(o.notat).replace(/\n/g,'<br>'):' Sjå notatet frå Jacob, eller ta kontakt.')+'</div>':'')+
       '<label class="fld big"><span>Lim inn Frame.io-lenka</span><input type="text" id="l-lenke" inputmode="url" autocomplete="off" placeholder="https://f.io/…"></label>'+
       (o.lenke&&ret?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Førre versjon ↗</a>':'')+
-      '<p class="hint" style="margin:0;font-size:13px">Når du trykkjer «Lever video», får Jacob beskjed på tavla. Du treng ikkje sende noko anna.</p>'+
+      '<p class="hint" style="margin:0;font-size:13px">Send videoen til godkjenning.</p>'+
       '<button type="button" class="clearf" data-openfull="'+esc(key)+'" style="align-self:flex-start">Opne heile jobben</button>';
-    $('saveBtn').textContent='Lever video'; $('saveBtn').hidden=false; $('delBtn').hidden=true;
+    $('saveBtn').textContent='Send til godkjenning'; $('saveBtn').hidden=false; $('delBtn').hidden=true;
     $('scrim').hidden=false; $('drawer').hidden=false;
     setTimeout(function(){ $('l-lenke').focus(); },30);
   }
@@ -1035,7 +1035,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       var ln=$('l-lenke').value.trim();
       if(!/^https?:\/\/\S+\.\S+/.test(ln)){ $('l-lenke').focus(); toast('Lim inn heile lenka, til dømes https://f.io/…'); return; }
       try{ await run(sb.from('oppdrag').update({lenke:ln,status:'levert',retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',editKey));
-        closeDrawer(); toast('Video levert. Jacob får beskjed på tavla'); reload(); }catch(err){ toast(writeErr(err)); }
+        closeDrawer(); toast('Videoen er send til godkjenning'); reload(); }catch(err){ toast(writeErr(err)); }
       return;
     }
     if(!warnOK && checkConflict().length){ warnOK=true; $('saveBtn').textContent='Lagre likevel'; $('f-warn').scrollIntoView({block:'center',behavior:'smooth'}); return; }

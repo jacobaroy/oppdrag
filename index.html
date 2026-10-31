@@ -292,7 +292,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     <button class="btn primary" type="submit" id="l-btn" style="justify-content:center">Send kode</button>
   </form>
   <form id="codeForm" hidden style="display:flex;flex-direction:column;gap:12px">
-    <label class="fld"><span>Kode frå e-posten</span><input id="l-code" required autocomplete="one-time-code" inputmode="numeric" maxlength="12" placeholder="123456" style="font-size:22px;letter-spacing:.3em;text-align:center"></label>
+    <label class="fld"><span>Kode frå e-posten</span><input id="l-code" required autocomplete="one-time-code" inputmode="numeric" maxlength="12" data-len="8" placeholder="12345678" style="font-size:22px;letter-spacing:.3em;text-align:center"></label>
     <button class="btn primary" type="submit" id="c-btn" style="justify-content:center">Logg inn</button>
     <button class="clearf" type="button" id="l-back" style="align-self:center">Bruk ei anna e-postadresse</button>
   </form>

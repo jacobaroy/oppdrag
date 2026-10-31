@@ -398,6 +398,20 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 <main class="wrap" id="admin" hidden>
   <section class="panel">
+    <div class="ph"><h2>Fakturainfo til partnarane</h2></div>
+    <form id="fakForm" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <p class="hint" style="margin:0;font-size:13px">Partnarane ser dette i menyen sin når dei skal sende faktura. Endrar du noko her, ser dei det med ein gong.</p>
+      <div class="two"><label class="fld"><span>Firmanamn</span><input id="fk-namn" autocomplete="organization"></label>
+        <label class="fld"><span>Org.nr.</span><input id="fk-orgnr" inputmode="numeric"></label></div>
+      <div class="two"><label class="fld"><span>Send faktura til (e-post)</span><input id="fk-epost" type="email"></label>
+        <label class="fld"><span>Betalingsfrist</span><input id="fk-frist" placeholder="14 dagar"></label></div>
+      <label class="fld"><span>Postadresse</span><input id="fk-adresse" autocomplete="street-address" placeholder="Gate 1, 0000 Stad"></label>
+      <label class="fld"><span>Merk fakturaen med</span><input id="fk-merking"></label>
+      <label class="fld"><span>Fleire oppdrag på éin faktura</span><input id="fk-samle"></label>
+      <div><button class="btn primary" type="submit">Lagre fakturainfo</button></div>
+    </form>
+  </section>
+  <section class="panel">
     <div class="ph"><h2>Inviter brukar</h2></div>
     <form id="invForm" class="invform">
       <label class="fld"><span>E-post</span><input id="i-email" type="email" required placeholder="namn@domene.no" autocomplete="off"></label>
@@ -501,7 +515,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   var PRIS={}, HON={}, AVSLAG=[], offers=[], MVA=0.25, OV='idag';
   try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
   var MEG='Jacob';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
-  // Fakturainfo til partnarane. Endre her.
+  // Fakturainfo til partnarane. Standardverdiar; Jacob endrar dei under Brukarar (tabellen innstillingar).
   var FAKTURA={ namn:'AROYFILM', orgnr:'930 795 577', epost:'hei@aroyfilm.no', adresse:'', merking:'Namnet ditt, månaden og tittelen på kvart oppdrag', samle:'Du kan samle fleire oppdrag på éin faktura, men kvart oppdrag må ha si eiga linje.', frist:'' };
   function kr(n){ n=Math.round(+n||0); return n.toLocaleString('nb-NO').replace(/,/g,' ')+' kr'; }
   function inkl(n){ return (+n||0)*(1+MVA); }
@@ -554,6 +568,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     rows=r1.data||[];
     var r4=await sb.from('opptatt').select('*'); blocks=r4.data||[];
     var r5=await sb.from('oppdrag_honorar').select('*'); HON={}; (r5.data||[]).forEach(function(h){ HON[h.oppdrag_id]=+h.belop; });
+    var r9=await sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle(); if(r9.data&&r9.data.verdi) Object.assign(FAKTURA,r9.data.verdi);
     if(isOwner){
       var r2=await sb.from('profiles').select('*').order('namn'); allProfiles=r2.data||[];
       var r3=await sb.from('invitasjonar').select('*').order('namn'); invites=r3.data||[];
@@ -562,7 +577,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       var r8=await sb.from('kundar').select('*'); KUNDAR={}; (r8.data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
       photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade,mva:p.mva_registrert!==false}; });
     }
-    msg(''); rebuild(); if(isOwner) renderUsers();
+    msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); }
   }
   var lt; function reload(){ clearTimeout(lt); lt=setTimeout(loadAll,250); }
 
@@ -1149,6 +1164,14 @@ button,input,select,textarea{font:inherit;color:inherit}
       reload();
     }catch(err){ toast(writeErr(err)); }
   }
+  // ---- fakturainfo (eigar) ----
+  var FK=['namn','orgnr','epost','frist','adresse','merking','samle'];
+  function fillFak(){ var f=document.activeElement; if(f&&f.id&&f.id.indexOf('fk-')===0) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  $('fakForm').addEventListener('submit',async function(e){
+    e.preventDefault(); var v={}; FK.forEach(function(k){ v[k]=$('fk-'+k).value.trim(); });
+    if(!v.namn||!v.epost){ toast('Fyll inn firmanamn og e-post'); return; }
+    try{ await run(sb.from('innstillingar').upsert({id:'faktura',verdi:v})); Object.assign(FAKTURA,v); toast('Fakturainfo lagra'); }catch(err){ toast(writeErr(err)); }
+  });
   $('invForm').addEventListener('submit',async function(e){
     e.preventDefault();
     var inv={email:$('i-email').value.trim().toLowerCase(),namn:$('i-namn').value.trim(),rolle:$('i-rolle').value,omrade:$('i-omrade').value};
@@ -1236,7 +1259,8 @@ button,input,select,textarea{font:inherit;color:inherit}
       .on('postgres_changes',{event:'*',schema:'public',table:'oppdrag_pris'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'oppdrag_honorar'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'avslag'},reload)
-      .on('postgres_changes',{event:'*',schema:'public',table:'kundar'},reload).subscribe();
+      .on('postgres_changes',{event:'*',schema:'public',table:'kundar'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'innstillingar'},reload).subscribe();
   }
   var C=window.AROY_CONFIG||{};
   if(!window.supabase||!C.url||!C.key){ fatal('Oppsettet manglar. Fyll inn config.js.'); return; }

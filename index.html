@@ -40,7 +40,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.danger{color:var(--s-retting)}
 .icon{width:30px;height:30px;padding:0;justify-content:center}
 
-@media (max-width:640px){.bar-in{gap:10px}.bar #areas{order:3;width:100%;display:flex}.bar #areas button{flex:1}}
+@media (max-width:640px){.bar-in{gap:10px}.bar #areas{order:3;width:100%;display:flex}.bar #areas button{flex:1}
+  .bar #nav{order:2;width:100%;display:flex;overflow-x:auto;scrollbar-width:none}.bar #nav::-webkit-scrollbar{display:none}.bar #nav button{flex:1;padding:8px 10px}
+  .icon{width:40px;height:40px}.chipbtn{padding:8px 12px}.ubtn{padding:8px 12px}.statsel{padding:8px 28px 8px 22px}
+  .fld input,.fld select,.fld textarea,.ksearch{font-size:16px}   /* under 16px zoomar iPhone inn på feltet */
+  .cap td.capday{width:70px;white-space:nowrap}.cap .capc{max-width:none}}
 .wrap{max-width:1180px;margin:0 auto;padding-block:24px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
 .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
@@ -147,7 +151,31 @@ button,input,select,textarea{font:inherit;color:inherit}
 .seg.full{display:flex}.seg.full button{flex:1}
 .err{color:var(--s-retting);font-size:13px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#000;font-weight:600;padding:10px 16px;border-radius:8px;font-size:13px;z-index:50}
-@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}}
+/* Rørsle: mjuk og kort. Alt blir slått av for den som har valt «reduser rørsle». */
+:root{--ease:cubic-bezier(.22,.8,.24,1)}
+@media (prefers-reduced-motion:no-preference){
+  .drawer{animation:drawerIn .32s var(--ease) both}
+  .drawer.out{animation:drawerOut .2s ease-in both}
+  @keyframes drawerIn{from{transform:translateX(100%)}to{transform:none}}
+  @keyframes drawerOut{to{transform:translateX(100%)}}
+  @media (max-width:640px){.drawer{animation-name:sheetIn}.drawer.out{animation-name:sheetOut}
+    @keyframes sheetIn{from{transform:translateY(100%)}to{transform:none}}
+    @keyframes sheetOut{to{transform:translateY(100%)}}}
+  .scrim{animation:fadeIn .25s ease both}.scrim.out{animation:fadeOut .2s ease both}
+  @keyframes fadeIn{from{opacity:0}}@keyframes fadeOut{to{opacity:0}}
+  .wrap>.panel,.wrap>.split,.wrap>div>.panel,.onb{animation:rise .38s var(--ease) both}
+  .wrap>:nth-child(2){animation-delay:.04s}.wrap>:nth-child(3){animation-delay:.08s}.wrap>:nth-child(4){animation-delay:.12s}.wrap>:nth-child(n+5){animation-delay:.16s}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .toast{animation:toastIn .3s var(--ease) both}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translateX(-50%)}}
+  .btn,.seg button,.chip2,.chipbtn,.kpi,.day,.capc,.todo li,.next li,.tbl tr.job td,.krow td{transition:background-color .18s ease,color .18s ease,border-color .18s ease,transform .12s ease,box-shadow .18s ease}
+  .btn:active,.seg button:active,.chip2:active,.chipbtn:active,.capc:active{transform:scale(.96)}
+  .kpi:active{transform:scale(.98)}
+  .todo li.gone,.offer.gone{animation:gone .28s ease both}
+  @keyframes gone{to{opacity:0;transform:translateX(16px)}}
+  .kpi .v.count{animation:pop .5s var(--ease) both}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}}
+}
 </style>
 <style>
 .who{color:var(--muted);font-size:13px}
@@ -343,7 +371,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       <ol>
         <li><b>Nye jobbar dukkar opp øvst</b><span>Trykk «Ta jobben» for å få han.</span></li>
         <li><b>«Dette må du gjere» viser kva som hastar</b><span>Opptak i dag, video som skal leverast og rettingar.</span></li>
-        <li><b>Lever med Frame.io-lenke</b><span>Opne jobben, lim inn lenka og trykk Lagre.</span></li>
+        <li><b>Lever med Frame.io-lenke</b><span>Trykk «Lever video», lim inn lenka og send til godkjenning.</span></li>
         <li><b>Ikkje ledig?</b><span>Trykk «Merk meg opptatt», så blir du ikkje booka.</span></li>
       </ol>
       <p class="hint" style="margin:0;font-size:13px">Tips: Legg tavla til på heimeskjermen. På iPhone: del-knappen i Safari, så «Legg til på Hjem-skjerm».</p>
@@ -420,7 +448,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       <label class="fld"><span>Område</span><select id="i-omrade"><option>Oslo</option><option>Bergen</option><option>Sogn</option></select></label>
       <button class="btn primary" type="submit" style="align-self:end;justify-content:center">Inviter</button>
     </form>
-    <p class="hint" style="padding:0 16px 16px;margin:0">Send personen lenka til denne sida. Dei loggar inn med e-posten over og får ei innloggingslenke på mail. Rolla og området du set her, gjeld med ein gong.</p>
+    <p class="hint" style="padding:0 16px 16px;margin:0">Send personen lenka til denne sida. Dei loggar inn med e-posten over og får ein kode på mail. Rolla og området du set her, gjeld med ein gong.</p>
   </section>
   <section class="panel">
     <div class="ph"><h2>Brukarar<span class="sub" id="ucount"></span></h2></div>
@@ -454,7 +482,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       </div>
     </section>
     <section><h3>Slik leverer du</h3>
-      <p>Last opp videoen til Frame.io. Opne jobben her, lim inn lenka og trykk Lagre. Då er jobben levert til Jacob, og du treng ikkje sende noko anna.</p>
+      <p>Last opp videoen til Frame.io. Trykk «Lever video» på jobben, lim inn lenka og trykk «Lever video til godkjenning». Du treng ikkje sende noko anna.</p>
       <p>Kjem det rettingar frå kunden, dukkar jobben opp under «Dette må du gjere». Legg inn ny lenke på same måte.</p>
     </section>
     <section><h3>Boligfilm</h3>
@@ -565,23 +593,24 @@ button,input,select,textarea{font:inherit;color:inherit}
   function by(k){ return view.filter(function(it){return it.o.status===k}); }
   function find(key){ return items.find(function(it){return it.key===key}); }
   async function loadAll(){
-    var r1=await sb.from('oppdrag').select('*');
+    // Alle tabellane blir henta samtidig, ikkje éin etter éin.
+    var q=[sb.from('oppdrag').select('*'), sb.from('opptatt').select('*'), sb.from('oppdrag_honorar').select('*'), sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle()];
+    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'));
+    var r=await Promise.all(q), r1=r[0];
     if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
-    rows=r1.data||[];
-    var r4=await sb.from('opptatt').select('*'); blocks=r4.data||[];
-    var r5=await sb.from('oppdrag_honorar').select('*'); HON={}; (r5.data||[]).forEach(function(h){ HON[h.oppdrag_id]=+h.belop; });
-    var r9=await sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle(); if(r9.data&&r9.data.verdi) Object.assign(FAKTURA,r9.data.verdi);
+    rows=r1.data||[]; blocks=r[1].data||[];
+    HON={}; (r[2].data||[]).forEach(function(h){ HON[h.oppdrag_id]=+h.belop; });
+    if(r[3].data&&r[3].data.verdi) Object.assign(FAKTURA,r[3].data.verdi);
     if(isOwner){
-      var r2=await sb.from('profiles').select('*').order('namn'); allProfiles=r2.data||[];
-      var r3=await sb.from('invitasjonar').select('*').order('namn'); invites=r3.data||[];
-      var r6=await sb.from('oppdrag_pris').select('*'); PRIS={}; (r6.data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
-      var r7=await sb.from('avslag').select('*'); AVSLAG=r7.data||[];
-      var r8=await sb.from('kundar').select('*'); KUNDAR={}; (r8.data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
+      allProfiles=r[4].data||[]; invites=r[5].data||[];
+      PRIS={}; (r[6].data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
+      AVSLAG=r[7].data||[];
+      KUNDAR={}; (r[8].data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
       photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade,mva:p.mva_registrert!==false}; });
     }
     msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); }
   }
-  var lt; function reload(){ clearTimeout(lt); lt=setTimeout(loadAll,250); }
+  var lt; function reload(){ clearTimeout(lt); lt=setTimeout(loadAll,400); }   // eiga lagring + sanntidsmeldinga blir slegne saman til éi henting
 
   // ---- render ----
   function render(){
@@ -598,13 +627,15 @@ button,input,select,textarea{font:inherit;color:inherit}
         kb('godkjent',fakt?' alert':'','godkjent','Klar til faktura',kr(fakt))+
         mb('Omsetning i '+mn,kr(oms),'eks. mva'+(utan?' · '+utan+' utan pris':''))+
         mb('Forteneste i '+mn,kr(oms-hon),'etter honorar, eks. mva');
+      if(kpiAnim){ kpiAnim=false; [].forEach.call($('kpis').querySelectorAll('.v'),function(v){ v.classList.add('count'); }); }
     } else {
       renderNext(); renderOffers(); renderInvoice();
     }
-    renderCal(); renderTodo(); renderCap(); renderMonth(); renderTable();
+    // Berre panela som synest, blir teikna.
+    renderTodo(); if(!$('split').hidden) renderCal(); if(!$('capPanel').hidden) renderCap(); if(!$('monthPanel').hidden) renderMonth(); if(!$('listPanel').hidden) renderTable();
     if(isOwner&&OV==='kundar'&&!openK&&!newK) renderKundar();   // ikkje skriv over eit skjema du held på med
   }
-  var YEAR=0;
+  var YEAR=0, kpiAnim=true;
   function mb(l,v,sub){return '<div class="kpi static"><span class="l">'+l+'</span><span class="v">'+v+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'}
   function renderNext(){
     var L=[]; view.forEach(function(it){ if(it.o.status!=='booka') return; days(it.o).forEach(function(d,ix){ if(d.dato>=TODAY) L.push({it:it,d:d,ix:ix,n:days(it.o).length}); }); });
@@ -625,11 +656,11 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('todoPanel').hidden=o&&v!=='idag';
     $('kpis').hidden=!(o&&v==='idag'); $('capPanel').hidden=!(o&&v==='idag');
     $('nextPanel').hidden=o;
-    $('split').hidden=o&&v!=='oversikt'; $('listPanel').hidden=o&&v!=='oversikt';
+    $('split').hidden=!o||v!=='oversikt';   // partnaren har «Kommande opptak» i staden $('listPanel').hidden=o&&v!=='oversikt';
     $('monthPanel').hidden=!(o&&v==='oversikt'); $('backupPanel').hidden=!(o&&v==='oversikt');
     $('kundePanel').hidden=!(o&&v==='kundar');
     $('nav').hidden=!o; $('areas').hidden=!o||v==='kundar'||adm;
-    $('newBtn').hidden=!!PV||adm; $('blockBtn').hidden=o||!!PV; $('infoBtn').hidden=o;
+    $('newBtn').hidden=!o||adm; $('blockBtn').hidden=o||!!PV; $('infoBtn').hidden=o;
     $('todoTitle').textContent=o?'Treng deg':'Dette må du gjere';
     $('brandSub').textContent=o?'Oppdrag':'Mine jobbar';
     if(!o&&profile){ $('who').textContent=(profile.namn||'')+(profile.omrade?' · '+profile.omrade:''); }
@@ -737,7 +768,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       var p=selDay.split('-'), dd=new Date(+p[0],+p[1]-1,+p[2]), sj=jobsOn(selDay);
       h+='<div class="daylist"><h3>'+DAG[(dd.getDay()+6)%7]+' '+dd.getDate()+'. '+MND[dd.getMonth()]+'</h3>'+
         (sj.length?'<ul class="todo" style="padding:0">'+sj.map(function(it){var o=it.o, ds=days(o), ix=ds.findIndex(function(x){return x.dato===selDay}), tdy=ds[ix].tid;return '<li data-open="'+esc(it.key)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc((tdy?tdy+'  ':'')+(o.adresse||'')+(ds.length>1?'  (dag '+(ix+1)+' av '+ds.length+')':''))+'</b><span>'+esc([o.kunde,isOwner?o.fotograf:'',(SL[o.status]||{}).l].filter(Boolean).join(' · '))+'</span></div></li>'}).join('')+'</ul>':'<span class="tag">Ingen oppdrag denne dagen.</span>')+
-        '<div><button class="btn" type="button" data-addday="'+selDay+'">+ Nytt oppdrag denne dagen</button></div></div>';
+        (isOwner?'<div><button class="btn" type="button" data-addday="'+selDay+'">+ Nytt oppdrag denne dagen</button></div>':'')+'</div>';
     }
     $('cal').innerHTML=h;
   }
@@ -764,7 +795,9 @@ button,input,select,textarea{font:inherit;color:inherit}
     var rh = reqs.map(function(p){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>'+esc(p.namn||p.email)+' vil bli partnar</b><span>'+esc([p.omrade,p.telefon,p.firma,p.email].filter(Boolean).join(' · '))+'</span></div>'+
       '<div class="reqa"><button class="btn primary ubtn" type="button" data-uact="gi" data-id="'+esc(p.id)+'">Godkjenn</button><button class="btn ubtn" type="button" data-uact="avvis" data-id="'+esc(p.id)+'">Avvis</button></div></li>'; }).join('');
     if(rh&&!list.length){ $('todo').innerHTML=rh; return; }
-    $('todo').innerHTML = rh + (list.length ? list.map(function(x){var o=x.it.o;return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div></li>'}).join('')
+    var QB={levert:['godkjent','Godkjent'],godkjent:['fakturert','Fakturert']};
+    $('todo').innerHTML = rh + (list.length ? list.map(function(x){var o=x.it.o, q=isOwner&&QB[o.status];return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"'+(q?' class="req"':'')+'><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div>'+
+      (q?'<div class="reqa">'+(o.lenke&&o.status==='levert'?'<a class="btn ubtn" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Sjå video</a>':'')+'<button class="btn primary ubtn" type="button" data-quick="'+esc(x.it.key)+'" data-to="'+q[0]+'">'+q[1]+'</button></div>':'')+'</li>'}).join('')
       : '<li class="empty" style="cursor:default">'+(isOwner?'Ingenting ventar på deg.':'Alt er levert. Godt jobba.')+'</li>');
   }
 
@@ -828,6 +861,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     }).join('');
   }
   async function offerAction(id,take){
+    var card=(document.querySelector('[data-take="'+id+'"]')||{closest:function(){return null}}).closest('.offer'); if(card) card.classList.add('gone');
     try{ var r=await sb.rpc(take?'ta_jobb':'avsla_jobb',{p_id:id}); if(r.error) throw r.error;
       toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått'); reload();
     }catch(err){ toast(writeErr(err)); }
@@ -852,7 +886,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('listTitle').firstChild.nodeValue = isOwner?'Oppdrag':'Mine jobbar';
     $('jobcount').innerHTML=(list.length?String(list.length):'')+(kpi?' · '+KPIL[kpi]+'<button type="button" class="clearf" data-clearkpi>Vis alle</button>':'');
     [].forEach.call(document.querySelectorAll('[data-lmode]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-lmode')===listMode&&!kpi?'true':'false')});
-    if(!items.length){ $('tbl').innerHTML='<tr><td class="empty">Ingen jobbar enno. Trykk «+ Nytt oppdrag», eller vel ein dag i kalenderen.</td></tr>'; return; }
+    if(!items.length){ $('tbl').innerHTML='<tr><td class="empty">'+(isOwner?'Ingen jobbar enno. Trykk «+ Nytt oppdrag», eller vel ein dag i kalenderen.':'Ingen jobbar enno. Nye jobbar dukkar opp øvst når Jacob sender dei.')+'</td></tr>'; return; }
     if(!list.length){ $('tbl').innerHTML='<tr><td class="empty">'+(listMode==='fakturert'&&!kpi?'Ingen fakturerte jobbar enno.':'Ingen jobbar her.')+'</td></tr>'; return; }
     var ch=statusChoices();
     var opts=function(cur){var l=ch.slice(); if(!SL[cur]||!ch.some(function(s){return s.k===cur})) l=l.concat([SL[cur]||STATUSES[0]]); return l.map(function(s){return '<option value="'+s.k+'"'+(s.k===cur?' selected':'')+'>'+s.l+'</option>'}).join('')};
@@ -866,7 +900,7 @@ button,input,select,textarea{font:inherit;color:inherit}
         '<td class="c-date num">'+esc(fmtDays(o))+'</td>'+
         '<td class="c-addr addr"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc([o.kunde,isOwner?o.type:''].filter(Boolean).join(' · '))+'</span></td>'+
         '<td class="c-type tag">'+third+'</td>'+
-        '<td class="c-stat">'+progress(o)+'<select class="statsel" style="--c:'+sc(s)+'" data-status="'+esc(it.key)+'" aria-label="Status">'+opts(s)+'</select></td>'+
+        '<td class="c-stat">'+progress(o)+(isOwner?'<select class="statsel" style="--c:'+sc(s)+'" data-status="'+esc(it.key)+'" aria-label="Status">'+opts(s)+'</select>':'<span class="tag"><i class="dot" style="--c:'+sc(s)+';display:inline-block;margin-right:6px"></i>'+esc((SL[s]||{}).l||'')+'</span>')+'</td>'+
         '<td class="c-foto tag">'+fifth+'</td>'+
         '<td class="meta-m">'+esc([fmtDays(o),isOwner?o.fotograf:'',o.omrade].filter(function(x){return x&&x!=='–'}).join(' · '))+(isOwner?' · '+(s==='fakturert'?'✓ Fakturert':(s==='godkjent'?'Klar til faktura':'Ikkje fakturert')):'')+'</td>'+
       '</tr>';
@@ -897,6 +931,15 @@ button,input,select,textarea{font:inherit;color:inherit}
     var rows=capRows();
     if(!rows.length){ $('capTbl').innerHTML='<tr><td class="empty">Ingen fotografar enno. Dei dukkar opp her når dei har logga inn, eller når du set ein fotograf på ein jobb.</td></tr>'; return; }
     var DK=['Må','Ty','On','To','Fr','La','Sø'];
+    if(window.matchMedia&&matchMedia('(max-width:640px)').matches){
+      // Mobil: éi linje per dag med det som skjer, i staden for ein brei tabell.
+      var L='';
+      ds.forEach(function(d,i){ var p=d.split('-'), items2=[];
+        rows.forEach(function(r){ rowJobs(r,d).forEach(function(it){ var t=onDay(it.o,d).tid; items2.push('<span class="capc job" data-open="'+esc(it.key)+'"><i class="dot" style="--c:'+sc(it.o.status)+'"></i>'+(t?esc(t)+' ':'')+esc(it.o.adresse||'')+' · '+esc(r.namn)+'</span>'); });
+          if(r.uid) blocksOn(d,r.uid).forEach(function(b){ items2.push('<span class="capc busy">'+esc(r.namn)+' opptatt'+(b.notat?' · '+esc(b.notat):'')+'</span>'); }); });
+        L+='<tr><td class="capday'+(d===TODAY?' today':'')+'"><b>'+DK[i]+' '+(+p[2])+'.'+(+p[1])+'</b></td><td>'+(items2.join('')||'<span class="tag">–</span>')+'</td></tr>'; });
+      $('capTbl').innerHTML='<tbody>'+L+'</tbody>'; return;
+    }
     var h='<thead><tr><th>Fotograf</th>'+ds.map(function(d,i){var p=d.split('-');return '<th'+(d===TODAY?' class="today"':'')+'>'+DK[i]+' '+(+p[2])+'.'+(+p[1])+'</th>'}).join('')+'</tr></thead><tbody>';
     rows.forEach(function(r){
       h+='<tr><td><b style="font-weight:500">'+esc(r.namn)+'</b><br><span class="tag">'+esc(r.omr||'')+'</span></td>';
@@ -930,6 +973,21 @@ button,input,select,textarea{font:inherit;color:inherit}
     warnOK=false; $('saveBtn').textContent='Lagre';
     if(c.length){ w.innerHTML='<b>Mogleg dobbelbooking.</b> '+esc(isOwner?'Fotografen har':'Du har')+' allereie:<br>'+c.map(esc).join('<br>'); w.hidden=false; } else w.hidden=true;
     return c; }
+  // Partnaren ser jobben, men kan ikkje endre han. Levering skjer med éin knapp.
+  function openJob(key){
+    var it=find(key); if(!it) return; var o=it.o; mode='view'; editKey=key;
+    var kv=function(k,v){ return v?'<dt>'+esc(k)+'</dt><dd>'+v+'</dd>':''; };
+    var dg=days(o).map(function(d){ return esc(shortDate(d.dato)+(d.tid?' kl. '+d.tid:'')); }).join('<br>');
+    $('dtitle').textContent=o.adresse||'Oppdrag';
+    $('dbody').innerHTML='<dl class="kv2">'+kv('Kunde',esc(o.kunde))+kv('Type',esc(o.type))+kv('Opptak',dg||'Ikkje sett')+kv('Område',esc(o.omrade))+
+      kv('Honorar',esc(honText(o.honorar,myMva())))+kv('Status',esc((SL[o.status]||{}).l||''))+
+      kv('Video',o.lenke&&/^https?:\/\//.test(o.lenke)?'<a href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
+      kv('Notat frå Jacob',o.notat?esc(o.notat).replace(/\n/g,'<br>'):'')+'</dl>'+
+      (WORK.indexOf(o.status)>=0?'<button class="btn primary" type="button" data-lever="'+esc(key)+'" style="justify-content:center">'+(o.status==='retting'?'Lever ny versjon':'Lever video')+'</button>':'')+
+      '<p class="hint" style="margin:0;font-size:13px">Er noko feil? Send e-post til <a href="mailto:hei@aroyfilm.no" style="color:inherit">hei@aroyfilm.no</a>.</p>';
+    $('saveBtn').hidden=true; $('delBtn').hidden=true;
+    showIn($('scrim')); showIn($('drawer'));
+  }
   // Enkel levering for partnaren: berre lenka og éin knapp.
   function openDeliver(key){
     var it=find(key); if(!it) return; var o=it.o, ret=o.status==='retting';
@@ -937,12 +995,14 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('dtitle').textContent=ret?'Lever ny versjon':'Lever video';
     $('dbody').innerHTML='<div><b style="font-size:17px;display:block">'+esc(o.adresse||'Oppdrag')+'</b><span class="tag">'+esc([o.kunde,o.type,fmtDays(o)].filter(function(x){return x&&x!=='–'}).join(' · '))+'</span></div>'+
       (ret?'<div class="warn"><b>Kunden vil ha rettingar.</b>'+(o.notat?'<br>'+esc(o.notat).replace(/\n/g,'<br>'):' Sjå notatet frå Jacob, eller ta kontakt.')+'</div>':'')+
-      '<label class="fld big"><span>Lim inn Frame.io-lenka</span><input type="text" id="l-lenke" inputmode="url" autocomplete="off" placeholder="https://f.io/…"></label>'+
+      '<label class="fld big"><span>Lim inn Frame.io-lenka</span><input type="text" id="l-lenke" inputmode="url" enterkeyhint="send" autocomplete="off" autocapitalize="off" placeholder="https://f.io/…"></label>'+
+      (navigator.clipboard&&navigator.clipboard.readText?'<button class="btn" type="button" data-paste style="align-self:flex-start">Lim inn frå utklippstavla</button>':'')+
+      '<button class="btn primary" type="submit" style="justify-content:center">Lever video til godkjenning</button>'+
       (o.lenke&&ret?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Førre versjon ↗</a>':'')+
       ''+
-      '<button type="button" class="clearf" data-openfull="'+esc(key)+'" style="align-self:flex-start">Opne heile jobben</button>';
-    $('saveBtn').textContent='Lever video til godkjenning'; $('saveBtn').hidden=false; $('delBtn').hidden=true;
-    $('scrim').hidden=false; $('drawer').hidden=false;
+      '<button type="button" class="btn ghost" data-openfull="'+esc(key)+'" style="align-self:flex-start;padding-left:0">Sjå heile jobben</button>';
+    $('saveBtn').hidden=true; $('delBtn').hidden=true;   // knappen står rett under feltet, så tastaturet ikkje dekkjer han
+    showIn($('scrim')); showIn($('drawer'));
     setTimeout(function(){ $('l-lenke').focus(); },30);
   }
   function openBlock(key){
@@ -952,8 +1012,8 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('dbody').innerHTML='<p class="tag" style="white-space:normal">Jacob ser at du ikkje er ledig desse dagane, så du ikkje blir dobbelbooka. Han ser òg notatet.</p>'+
       '<div class="two"><label class="fld"><span>Frå</span><input type="date" id="b-fra" value="'+esc(b?b.fra:TODAY)+'"></label><label class="fld"><span>Til</span><input type="date" id="b-til" value="'+esc(b?b.til:'')+'"></label></div>'+
       '<label class="fld"><span>Notat (valfritt)</span><input id="b-notat" value="'+esc(b?b.notat:'')+'" placeholder="Ferie, anna jobb"></label>';
-    $('delBtn').hidden=!b; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed; $('saveBtn').textContent='Lagre';
-    $('scrim').hidden=false; $('drawer').hidden=false;
+    $('delBtn').hidden=!b; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed; $('saveBtn').textContent='Lagre'; $('saveBtn').hidden=false;
+    showIn($('scrim')); showIn($('drawer'));
   }
   function dayRow(d){ return '<div class="two dayrow"><input type="date" class="d-dato" aria-label="Dato" value="'+esc(d.dato)+'"><div style="display:flex;gap:6px"><input type="time" class="d-tid" aria-label="Klokkeslett" value="'+esc(d.tid)+'" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface)"><button type="button" class="btn ghost icon" data-delrow aria-label="Fjern dag" style="height:auto">✕</button></div></div>'; }
   function openDrawer(key,preset,focusLink){
@@ -993,21 +1053,26 @@ button,input,select,textarea{font:inherit;color:inherit}
       fotoField+
       '<div class="warn" id="f-warn" hidden></div>'+
       '<label class="fld"><span>Status</span><select id="f-status">'+st.map(function(s){return '<option value="'+s.k+'"'+(s.k===o.status?' selected':'')+'>'+s.l+'</option>'}).join('')+'</select></label>'+
-      '<label class="fld"><span>Lenke til video (Frame.io). Når lenka er lagt inn, blir jobben levert til Jacob</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>'+
+      '<label class="fld"><span>Lenke til video (Frame.io)</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>'+
       (o.lenke&&/^https?:\/\//.test(o.lenke)?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
-      '<label class="fld"><span>Notat</span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>';
-    $('delBtn').hidden=!it||PV; $('saveBtn').hidden=PV; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed;
+      '<label class="fld"><span>Notat'+(isOwner?' <span class="hint">fotografen ser dette, ikkje skriv pris her</span>':'')+'</span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>';
+    $('delBtn').hidden=!it||PV||!isOwner; $('saveBtn').hidden=!!PV; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed;
     setTimeout(function(){ checkConflict(); priceSum(); },0);
-    $('scrim').hidden=false; $('drawer').hidden=false;
+    showIn($('scrim')); showIn($('drawer'));
     setTimeout(function(){ if(focusLink) $('f-lenke').focus(); else if(!it) $('f-adresse').focus(); },30);
   }
   function priceSum(){ var e=$('f-sum'); if(!e) return; var p=$('f-pris').value, h=$('f-hon').value; var t=[];
     if(p!=='') t.push('Kunde betaler '+kr(inkl(p))+' inkl. mva');
     if(p!==''&&h!=='') t.push('Forteneste '+kr(p-h)+' eks. mva');
     e.textContent=t.join(' · '); }
-  function closeDrawer(){ $('drawer').hidden=true; if($('info').hidden) $('scrim').hidden=true; editKey=null; }
-  function openInfo(){ renderInvoice(); $('scrim').hidden=false; $('info').hidden=false; }
-  function closeInfo(){ $('info').hidden=true; if($('drawer').hidden) $('scrim').hidden=true; }
+  // Lukk med ei kort rørsle ut (berre når rørsle er på), og gøym så.
+  var MOTION=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function hideOut(el,after){ if(el.hidden) return; if(!MOTION){ el.hidden=true; after&&after(); return; }
+    el.classList.add('out'); clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove('out'); el.hidden=true; after&&after(); },190); }
+  function showIn(el){ clearTimeout(el._t); el.classList.remove('out'); el.hidden=false; }
+  function closeDrawer(){ editKey=null; hideOut($('drawer')); if($('info').hidden) hideOut($('scrim')); }
+  function openInfo(){ renderInvoice(); showIn($('scrim')); showIn($('info')); }
+  function closeInfo(){ hideOut($('info')); if($('drawer').hidden) hideOut($('scrim')); }
   // ---- førehandsvising: sjå som partnar ----
   var PV=null;
   function enterPreview(uid){
@@ -1048,7 +1113,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     var row={tittel:g('adresse'),kunde:g('kunde'),kategori:draft.kat||'',dagar:dg,dato:dg.length?dg[0].dato:null,status:g('status'),lenke:g('lenke'),notat:g('notat'),oppdatert:new Date().toISOString(),oppdatert_av:me};
     if(!row.tittel){ $('f-adresse').focus(); return; }
     // Ny lenke på ein jobb som ventar på video = levert (og rettingane er gjort).
-    var autoLev = row.lenke && row.lenke!==((it&&it.o.lenke)||'') && WORK.indexOf(row.status)>=0;
+    var autoLev = !isOwner && row.lenke && row.lenke!==((it&&it.o.lenke)||'') && WORK.indexOf(row.status)>=0;
     if(autoLev) row.status='levert';
     row.retting = row.status==='retting'; if(row.retting) row.status='levert';
     if(!isOwner&&it&&it.o.status==='retting'&&!autoLev&&row.status==='levert'){ row.retting=true; }   // partnaren kan ikkje fjerne rettingar utan ny video
@@ -1092,6 +1157,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   document.addEventListener('click',function(e){
     var t=e.target, b;
     if(t.closest('select')) return;
+    if(t.closest('a[href]')) return;   // lenkjer (t.d. «Sjå video») skal berre opne lenka
     if((b=t.closest('[data-close]'))){ closeDrawer(); return; }
     if((b=t.closest('[data-iclose]'))){ closeInfo(); return; }
     if((b=t.closest('[data-backup]'))){ backup(b.getAttribute('data-backup')).catch(function(){ toast('Klarte ikkje lage reservekopi.'); }); return; }
@@ -1105,9 +1171,10 @@ button,input,select,textarea{font:inherit;color:inherit}
     if((b=t.closest('[data-pvexit]'))){ exitPreview(); return; }
     if(PV&&t.closest('[data-take],[data-decline],[data-lever],[data-addday],[data-capcell],[data-blk],[data-addrow],[data-delrow],#invCopy')){ toast('Førehandsvising. Ingenting blir endra.'); return; }
     if((b=t.closest('[data-logout]'))){ sb.auth.signOut().then(function(){ location.reload(); }); return; }
-    if((b=t.closest('[data-ov]'))){ OV=b.getAttribute('data-ov'); try{localStorage.setItem('aroy-side',OV)}catch(err){} kpi=null; openK=null; newK=false; render(); if(OV==='brukarar') renderUsers(); window.scrollTo(0,0); return; }
+    if((b=t.closest('[data-ov]'))){ OV=b.getAttribute('data-ov'); kpiAnim=true; try{localStorage.setItem('aroy-side',OV)}catch(err){} kpi=null; openK=null; newK=false; render(); if(OV==='brukarar') renderUsers(); window.scrollTo(0,0); return; }
     if((b=t.closest('[data-uact]'))){ userAction(b); return; }
-    if((b=t.closest('[data-take]'))){ offerAction(b.getAttribute('data-take'),true); return; }
+    if((b=t.closest('[data-quick]'))){ quick(b); return; }
+    if((b=t.closest('[data-take]'))){ if(b.disabled) return; b.disabled=true; b.textContent='Tek jobben…'; offerAction(b.getAttribute('data-take'),true); return; }
     if((b=t.closest('[data-decline]'))){ if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen for å avslå'; return; } offerAction(b.getAttribute('data-decline'),false); return; }
     if((b=t.closest('[data-kat]'))){ draft.kat=b.getAttribute('data-kat'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
     if((b=t.closest('[data-typ]'))){ draft.type=b.getAttribute('data-typ'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
@@ -1126,8 +1193,9 @@ button,input,select,textarea{font:inherit;color:inherit}
     if((b=t.closest('[data-addrow]'))){ var last=[].slice.call(document.querySelectorAll('#f-days .d-dato')).pop(), nd=''; if(last&&last.value){ var q=last.value.split('-'), x=new Date(+q[0],+q[1]-1,+q[2]+1); nd=iso(x.getFullYear(),x.getMonth(),x.getDate()); } $('f-days').insertAdjacentHTML('beforeend',dayRow({dato:nd,tid:''})); return; }
     if((b=t.closest('[data-delrow]'))){ var rows=document.querySelectorAll('#f-days .dayrow'); if(rows.length>1) b.closest('.dayrow').remove(); else { b.closest('.dayrow').querySelector('.d-dato').value=''; b.closest('.dayrow').querySelector('.d-tid').value=''; } return; }
     if((b=t.closest('[data-lever]'))){ openDeliver(b.getAttribute('data-lever')); return; }
-    if((b=t.closest('[data-openfull]'))){ openDrawer(b.getAttribute('data-openfull')); return; }
-    if((b=t.closest('[data-open]'))){ openDrawer(b.getAttribute('data-open')); return; }
+    if((b=t.closest('[data-openfull]'))){ openJob(b.getAttribute('data-openfull')); return; }
+    if((b=t.closest('[data-paste]'))){ navigator.clipboard.readText().then(function(x){ $('l-lenke').value=(x||'').trim(); }).catch(function(){ toast('Trykk lenge i feltet og vel «Lim inn»'); }); return; }
+    if((b=t.closest('[data-open]'))){ var ok=b.getAttribute('data-open'); if(isOwner) openDrawer(ok); else openJob(ok); return; }
     if((b=t.closest('[data-day]'))){ var k=b.getAttribute('data-day'); selDay=(selDay===k?null:k); renderCal(); return; }
   });
   document.addEventListener('change',async function(e){
@@ -1176,7 +1244,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     try{ await run(sb.from('profiles').update(patch).eq('id',id)); await syncInvite(p,patch); toast('Lagra'); reload(); }catch(err){ toast(writeErr(err)); reload(); }
   }
   async function userAction(b){
-    var act=b.getAttribute('data-uact');
+    var act=b.getAttribute('data-uact'), li=b.closest('li.req'); if(li&&(act==='gi'||act==='avvis')) li.classList.add('gone');
     try{
       if(act==='avinviter'){ await run(sb.from('invitasjonar').delete().eq('email',b.getAttribute('data-email'))); toast('Invitasjonen er fjerna'); }
       else { var id=b.getAttribute('data-id'), p=allProfiles.find(function(x){return x.id===id});
@@ -1189,13 +1257,21 @@ button,input,select,textarea{font:inherit;color:inherit}
       reload();
     }catch(err){ toast(writeErr(err)); }
   }
+  // Hurtigknapp i «Treng deg»: flytt jobben eitt steg vidare utan å opne skuffa.
+  async function quick(b){
+    var key=b.getAttribute('data-quick'), to=b.getAttribute('data-to'), li=b.closest('li'); if(li) li.classList.add('gone');
+    try{ await run(sb.from('oppdrag').update({status:to,retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',key)); toast('Status: '+SL[to].l); reload(); }
+    catch(err){ if(li) li.classList.remove('gone'); toast(writeErr(err)); }
+  }
   // ---- fakturainfo (eigar) ----
   var FK=['namn','orgnr','epost','frist','adresse','merking','samle'];
-  function fillFak(){ var f=document.activeElement; if(f&&f.id&&f.id.indexOf('fk-')===0) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  var fakDirty=false;
+  function fillFak(){ var f=document.activeElement; if(fakDirty||(f&&f.id&&f.id.indexOf('fk-')===0)) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  $('fakForm').addEventListener('input',function(){ fakDirty=true; });
   $('fakForm').addEventListener('submit',async function(e){
     e.preventDefault(); var v={}; FK.forEach(function(k){ v[k]=$('fk-'+k).value.trim(); });
     if(!v.namn||!v.epost){ toast('Fyll inn firmanamn og e-post'); return; }
-    try{ await run(sb.from('innstillingar').upsert({id:'faktura',verdi:v})); Object.assign(FAKTURA,v); toast('Fakturainfo lagra'); }catch(err){ toast(writeErr(err)); }
+    try{ await run(sb.from('innstillingar').upsert({id:'faktura',verdi:v})); Object.assign(FAKTURA,v); fakDirty=false; toast('Fakturainfo lagra'); }catch(err){ toast(writeErr(err)); }
   });
   $('invForm').addEventListener('submit',async function(e){
     e.preventDefault();
@@ -1231,7 +1307,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   // Ny partnar: skriv namn og område, be om tilgang, og vent til Jacob godkjenner.
   function askAccess(){
     var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Jacob har fått beskjed og godkjenner deg så snart han kan. Du treng ikkje gjere noko meir. Sida opnar seg av seg sjølv når du er godkjend.'; $('na-form').hidden=true; $('na-perks').hidden=true;
-      setInterval(async function(){ var r=await sb.from('profiles').select('rolle,aktiv').eq('id',me).maybeSingle(); if(r.data&&r.data.rolle!=='ingen'&&r.data.aktiv) location.reload(); },15000); };
+      setInterval(async function(){ if(document.hidden) return; var r=await sb.from('profiles').select('rolle,aktiv').eq('id',me).maybeSingle(); if(r.data&&r.data.rolle!=='ingen'&&r.data.aktiv) location.reload(); },15000); };
     if(profile.onskjer_tilgang){ waiting(); return; }
     $('na-title').textContent='Bli partnar hos Aroy Film'; $('na-text').textContent='Oppdragstavla er der du får jobbar frå Aroy Film, leverer video og finn fakturagrunnlaget ditt.';
     $('na-perks').hidden=false; $('na-namn').value=profile.namn||''; $('na-form').hidden=false;

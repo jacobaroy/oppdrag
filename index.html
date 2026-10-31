@@ -12,7 +12,7 @@
   /* AROYFILM: svart og kvitt, som aroyfilm.no. Statusfargar er dei einaste fargane. */
   --bg:#000000; --surface:#0B0B0B; --ink:#FFFFFF; --muted:rgba(255,255,255,.62); --faint:rgba(255,255,255,.38); --line:rgba(255,255,255,.12); --hover:rgba(255,255,255,.06);
   --accent:#FFFFFF;
-  --s-tilbod:rgba(255,255,255,.4); --s-booka:#6E9BD1; --s-filma:#A497E0; --s-levert:#E8B04E; --s-retting:#F0614F; --s-godkjent:#E8B04E; --s-fakturert:#5FB884;
+  --s-tilbod:rgba(255,255,255,.4); --s-booka:#6E9BD1; --s-levert:#E8B04E; --s-retting:#F0614F; --s-godkjent:#E8B04E; --s-fakturert:#5FB884;
   --sans:"Inter",ui-sans-serif,system-ui,sans-serif; --mono:"Inter",ui-sans-serif,system-ui,sans-serif; --wide:"Archivo","Inter",sans-serif;
   --r:12px; color-scheme:dark;
 }
@@ -474,15 +474,17 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 <script>
 (function(){
-  // Fem steg: booka → filma → levert → godkjent → fakturert. «retting» finst berre i visinga:
+  // Fire steg: booka → levert → godkjent → fakturert. «retting» finst berre i visinga:
   // i databasen er det status «levert» med retting=true.
   var STATUSES=[
-    {k:'tilbod',l:'Tilbod sendt'},{k:'booka',l:'Booka'},{k:'filma',l:'Filma, i klipp'},
+    {k:'tilbod',l:'Tilbod sendt'},{k:'booka',l:'Booka'},
     {k:'levert',l:'Levert'},{k:'retting',l:'Rettingar'},
     {k:'godkjent',l:'Godkjent av kunden'},{k:'fakturert',l:'Fakturert'}];
   var SL={}; STATUSES.forEach(function(s){SL[s.k]=s});
   var DONE=['levert','retting','godkjent','fakturert'];   // gjennomført opptak + levert
-  var WORK=['booka','filma','retting'];   // partnaren har noko å levere
+  var WORK=['booka','retting'];   // partnaren har noko å levere
+  // Opptaket er gjort når alle opptaksdagane er passerte. Då ventar vi video, utan at partnaren må krysse av.
+  function shot(o){ var d=days(o); return d.length>0 && d.every(function(x){return x.dato<TODAY}); }
   var AREAS=['Oslo','Bergen','Sogn'], TYPES=['Boligfilm','Boligfilm + drone','Meklar snakkar','Reklamefilm','Sosiale medium','Musikkvideo','Event','Intervju','Dokumentar','Foto'];
   var CATS=[
     {k:'Eigedom',t:['Boligfilm','Boligfilm + drone','Meklar snakkar','Meklarprofil']},
@@ -707,7 +709,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       case 'aktive': return s!=='fakturert'&&s!=='tilbod';
       case 'levert': case 'retting': case 'godkjent': return s===kpi;
       case 'kommande': return s==='booka'&&upcoming(it.o);
-      case 'lever': return ['filma','retting'].indexOf(s)>=0;
+      case 'lever': return s==='retting'||(s==='booka'&&shot(it.o));
       case 'ferdig': case 'ferdig2': return DONE.indexOf(s)>=0&&inMonth(it.o);
       default: return true;
     }
@@ -716,14 +718,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 
   function jobsOn(day){return view.filter(function(it){return onDay(it.o,day)}).sort(function(a,b){return String(onDay(a.o,day).tid||'').localeCompare(String(onDay(b.o,day).tid||''))})}
   function renderCal(){
-    var first=new Date(calY,calM,1), start=(first.getDay()+6)%7, days=new Date(calY,calM+1,0).getDate();
+    var first=new Date(calY,calM,1), start=(first.getDay()+6)%7, nDays=new Date(calY,calM+1,0).getDate();
     var cap=MND[calM].charAt(0).toUpperCase()+MND[calM].slice(1);
     var h='<div class="ph"><div class="calnav"><span class="t">'+cap+' '+calY+'</span></div><div class="calnav">'+
       '<button class="btn ghost icon" type="button" data-cal="-1" aria-label="Førre månad">‹</button>'+
       '<button class="btn" type="button" data-cal="0">I dag</button>'+
       '<button class="btn ghost icon" type="button" data-cal="1" aria-label="Neste månad">›</button></div></div><div class="grid">';
     ['Må','Ty','On','To','Fr','La','Sø'].forEach(function(d){h+='<div class="dow">'+d+'</div>'});
-    var cells=Math.ceil((start+days)/7)*7;
+    var cells=Math.ceil((start+nDays)/7)*7;
     for(var i=0;i<cells;i++){
       var dt=new Date(calY,calM,i-start+1), key=iso(dt.getFullYear(),dt.getMonth(),dt.getDate()), js=jobsOn(key);
       var evs=js.slice(0,3).map(function(it){var o=it.o, tdy=onDay(o,key).tid;return '<span class="ev" data-open="'+esc(it.key)+'" title="'+esc(o.adresse)+'"><i class="dot" style="--c:'+sc(o.status)+'"></i>'+(tdy?'<time>'+esc(tdy)+'</time>':'')+'<b>'+esc(o.adresse||'')+'</b></span>'}).join('');
@@ -752,7 +754,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       } else {
         var dT=onDay(o,TODAY), dM=onDay(o,TOMORROW);
         if(o.status==='booka'&&(dT||dM)) why='Opptak '+(dT?'i dag':'i morgon')+((dT||dM).tid?' kl. '+(dT||dM).tid:'');
-        else if(o.status==='filma') why='Lever video';
+        else if(o.status==='booka'&&shot(o)) why='Lever video';
         else if(o.status==='retting') why='Rettingar frå kunden';
       }
       if(why) list.push({it:it,why:why});
@@ -832,11 +834,11 @@ button,input,select,textarea{font:inherit;color:inherit}
   }
 
   // Partnaren kan berre flytte jobben fram til levert. Rettingar, godkjent og fakturert set Jacob.
-  function statusChoices(){ return isOwner ? STATUSES : STATUSES.filter(function(s){return ['booka','filma','levert'].indexOf(s.k)>=0}); }
-  var STEPS=['booka','filma','levert','godkjent','fakturert'];
-  function stepIx(s){ if(s==='retting') return 2; if(s==='tilbod') return -1; return STEPS.indexOf(s); }
+  function statusChoices(){ return isOwner ? STATUSES : STATUSES.filter(function(s){return ['booka','levert'].indexOf(s.k)>=0}); }
+  var STEPS=['booka','levert','godkjent','fakturert'];
+  function stepIx(s){ if(s==='retting') return 1; if(s==='tilbod') return -1; return STEPS.indexOf(s); }
   function progress(o){
-    var ix=stepIx(o.status), n=isOwner?5:4, h='<div class="prog" title="'+esc((SL[o.status]||{}).l||'')+'">';
+    var ix=stepIx(o.status), n=isOwner?4:3, h='<div class="prog" title="'+esc((SL[o.status]||{}).l||'')+'">';
     for(var i=0;i<n;i++){ h+='<i class="'+(i<=ix?'on':'')+(i===ix&&o.status==='retting'?' bad':'')+'"></i>'; }
     return h+'</div>';
   }

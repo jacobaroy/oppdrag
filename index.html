@@ -118,6 +118,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .busyl .rg{display:flex;flex-wrap:wrap;gap:6px}
 .busyl .capc{display:inline-block;margin:0;max-width:none}
 @media (max-width:640px){.busyl li{grid-template-columns:1fr;gap:6px}}
+/* Samanleggbart panel (fakturainfo under Brukarar) */
+details.fold{overflow:hidden}
+details.fold>summary{cursor:pointer;list-style:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold:not([open])>summary{border-bottom:0}
+details.fold>summary:hover{background:var(--hover)}
+.chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .18s ease;flex:none}
+details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 .daylist{padding:12px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .daylist h3{margin:0;font-size:13px;font-weight:600}
 @media (max-width:640px){.day{min-height:52px;padding:4px}.ev b,.ev time{display:none}.ev{padding:0;display:inline-flex}.evs{display:flex;gap:3px;flex-wrap:wrap}.dow{padding:6px 4px;text-align:center}.dn{font-size:11px}}
@@ -462,20 +470,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 <main class="wrap" id="admin" hidden>
   <section class="panel">
-    <div class="ph"><h2>Fakturainfo til partnarane</h2></div>
-    <form id="fakForm" style="padding:16px;display:flex;flex-direction:column;gap:12px">
-      <p class="hint" style="margin:0;font-size:13px">Partnarane ser dette i menyen sin når dei skal sende faktura. Endrar du noko her, ser dei det med ein gong.</p>
-      <div class="two"><label class="fld"><span>Firmanamn</span><input id="fk-namn" autocomplete="organization"></label>
-        <label class="fld"><span>Org.nr.</span><input id="fk-orgnr" inputmode="numeric"></label></div>
-      <div class="two"><label class="fld"><span>Send faktura til (e-post)</span><input id="fk-epost" type="email"></label>
-        <label class="fld"><span>Betalingsfrist</span><input id="fk-frist" placeholder="14 dagar"></label></div>
-      <label class="fld"><span>Postadresse</span><input id="fk-adresse" autocomplete="street-address" placeholder="Gate 1, 0000 Stad"></label>
-      <label class="fld"><span>Merk fakturaen med</span><input id="fk-merking"></label>
-      <label class="fld"><span>Fleire oppdrag på éin faktura</span><input id="fk-samle"></label>
-      <div><button class="btn primary" type="submit">Lagre fakturainfo</button></div>
-    </form>
-  </section>
-  <section class="panel">
     <div class="ph"><h2>Inviter brukar</h2></div>
     <form id="invForm" class="invform">
       <label class="fld"><span>E-post</span><input id="i-email" type="email" required placeholder="namn@domene.no" autocomplete="off"></label>
@@ -490,6 +484,20 @@ button,input,select,textarea{font:inherit;color:inherit}
     <div class="ph"><h2>Brukarar<span class="sub" id="ucount"></span></h2></div>
     <div style="overflow-x:auto"><table class="month users" id="usersTbl"></table></div>
   </section>
+  <details class="panel fold" id="fakPanel">
+    <summary class="ph"><h2>Fakturainfo til partnarane</h2><span class="chev" aria-hidden="true"></span></summary>
+    <form id="fakForm" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <p class="hint" style="margin:0;font-size:13px">Partnarane ser dette i menyen sin når dei skal sende faktura. Endrar du noko her, ser dei det med ein gong.</p>
+      <div class="two"><label class="fld"><span>Firmanamn</span><input id="fk-namn" autocomplete="organization"></label>
+        <label class="fld"><span>Org.nr.</span><input id="fk-orgnr" inputmode="numeric"></label></div>
+      <div class="two"><label class="fld"><span>Send faktura til (e-post)</span><input id="fk-epost" type="email"></label>
+        <label class="fld"><span>Betalingsfrist</span><input id="fk-frist" placeholder="14 dagar"></label></div>
+      <label class="fld"><span>Postadresse</span><input id="fk-adresse" autocomplete="street-address" placeholder="Gate 1, 0000 Stad"></label>
+      <label class="fld"><span>Merk fakturaen med</span><input id="fk-merking"></label>
+      <label class="fld"><span>Fleire oppdrag på éin faktura</span><input id="fk-samle"></label>
+      <div><button class="btn primary" type="submit">Lagre fakturainfo</button></div>
+    </form>
+  </details>
 </main>
 <footer class="foot" id="foot" hidden>Logga inn som <span id="footWho"></span> · <button class="clearf" type="button" data-logout>Logg ut</button></footer>
 <p class="err" id="fatal" hidden style="text-align:center;margin:60px 20px"></p>

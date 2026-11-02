@@ -120,6 +120,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (max-width:640px){.busyl li{grid-template-columns:1fr;gap:6px}}
 /* Samanleggbart panel (fakturainfo under Brukarar) */
 details.fold{overflow:hidden}
+#fakForm.locked input{background:transparent;border-color:transparent;padding-left:0;color:var(--ink);cursor:default}
+#fakForm.locked input::placeholder{color:transparent}
+#fakForm.locked input{text-overflow:ellipsis}
+@media (max-width:640px){#fakForm .two{grid-template-columns:1fr}}
 details.fold>summary{cursor:pointer;list-style:none}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold:not([open])>summary{border-bottom:0}
@@ -486,7 +490,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   </section>
   <details class="panel fold" id="fakPanel">
     <summary class="ph"><h2>Fakturainfo til partnarane</h2><span class="chev" aria-hidden="true"></span></summary>
-    <form id="fakForm" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+    <form id="fakForm" class="locked" style="padding:16px;display:flex;flex-direction:column;gap:12px">
       <p class="hint" style="margin:0;font-size:13px">Partnarane ser dette i menyen sin når dei skal sende faktura. Endrar du noko her, ser dei det med ein gong.</p>
       <div class="two"><label class="fld"><span>Firmanamn</span><input id="fk-namn" autocomplete="organization"></label>
         <label class="fld"><span>Org.nr.</span><input id="fk-orgnr" inputmode="numeric"></label></div>
@@ -495,7 +499,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       <label class="fld"><span>Postadresse</span><input id="fk-adresse" autocomplete="street-address" placeholder="Gate 1, 0000 Stad"></label>
       <label class="fld"><span>Merk fakturaen med</span><input id="fk-merking"></label>
       <label class="fld"><span>Fleire oppdrag på éin faktura</span><input id="fk-samle"></label>
-      <div><button class="btn primary" type="submit">Lagre fakturainfo</button></div>
+      <div style="display:flex;gap:8px"><button class="btn" type="button" id="fakEdit">Rediger</button><button class="btn primary" type="submit" id="fakSave" hidden>Lagre fakturainfo</button><button class="btn ghost" type="button" id="fakCancel" hidden>Avbryt</button></div>
     </form>
   </details>
 </main>
@@ -1391,12 +1395,17 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   // ---- fakturainfo (eigar) ----
   var FK=['namn','orgnr','epost','frist','adresse','merking','samle'];
   var fakDirty=false;
-  function fillFak(){ var f=document.activeElement; if(fakDirty||(f&&f.id&&f.id.indexOf('fk-')===0)) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  function fillFak(force){ var f=document.activeElement; if(!force&&(fakDirty||(f&&f.id&&f.id.indexOf('fk-')===0))) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  // Fakturainfo er låst til Jacob trykkjer «Rediger», så han ikkje endrar noko ved eit uhell.
+  function fakLock(on){ $('fakForm').classList.toggle('locked',on); FK.forEach(function(k){ $('fk-'+k).readOnly=on; }); $('fakEdit').hidden=!on; $('fakSave').hidden=on; $('fakCancel').hidden=on; }
+  fakLock(true);
+  $('fakEdit').addEventListener('click',function(){ fakLock(false); $('fk-namn').focus(); });
+  $('fakCancel').addEventListener('click',function(){ fakDirty=false; fakLock(true); fillFak(true); });
   $('fakForm').addEventListener('input',function(){ fakDirty=true; });
   $('fakForm').addEventListener('submit',async function(e){
-    e.preventDefault(); var v={}; FK.forEach(function(k){ v[k]=$('fk-'+k).value.trim(); });
+    e.preventDefault(); if($('fakForm').classList.contains('locked')) return; var v={}; FK.forEach(function(k){ v[k]=$('fk-'+k).value.trim(); });
     if(!v.namn||!v.epost){ toast('Fyll inn firmanamn og e-post'); return; }
-    try{ await run(sb.from('innstillingar').upsert({id:'faktura',verdi:v})); Object.assign(FAKTURA,v); fakDirty=false; toast('Fakturainfo lagra'); }catch(err){ toast(writeErr(err)); }
+    try{ await run(sb.from('innstillingar').upsert({id:'faktura',verdi:v})); Object.assign(FAKTURA,v); fakDirty=false; fakLock(true); toast('Fakturainfo lagra'); }catch(err){ toast(writeErr(err)); }
   });
   $('invForm').addEventListener('submit',async function(e){
     e.preventDefault();

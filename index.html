@@ -87,6 +87,37 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ev time{font-family:var(--mono);font-size:11px;color:var(--muted);flex:none}
 .dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--c,var(--faint))}
 .more{font-size:11px;color:var(--muted);padding-left:4px}
+/* Partnarkalender: opptak og opptatte dagar. «Merk opptatt» slår på klikk-for-å-merke. */
+.pcalbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.pcalbar .hint{font-size:13px}
+.pcal .dow{text-align:center}
+.pday{min-height:76px;padding:6px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);display:flex;flex-direction:column;gap:3px;text-align:left;min-width:0;cursor:pointer;font:inherit}
+.pday:nth-child(7n+7){border-right:0}
+.pday:hover{background:var(--hover)}
+.pday .dn{font-family:var(--mono);font-size:12px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:none}
+.pday.today .dn{background:#fff;color:#000;font-weight:800}
+.pday.out .dn,.pday.past .dn{color:var(--faint)}
+.pday.past{cursor:default}
+.pday .pj{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.3;min-width:0}
+.pday .pj b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pday .pb{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pday.busy{background:repeating-linear-gradient(135deg,rgba(255,255,255,.09) 0 6px,transparent 6px 12px)}
+.pday.busy.past{opacity:.6}
+.pcal.marking .pday:not(.past){cursor:copy}
+.pcal.marking .pday:not(.past):hover{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.plegend{display:flex;gap:16px;padding:10px 16px;font-size:12px;color:var(--faint)}
+.plegend span{display:inline-flex;align-items:center;gap:6px}
+.plegend .sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);background:repeating-linear-gradient(135deg,rgba(255,255,255,.3) 0 3px,transparent 3px 6px)}
+#pcalMode[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff}
+@media (max-width:640px){.pday{min-height:50px;padding:4px;align-items:center}.pday .pj b,.pday .pb{display:none}.pday .pj{justify-content:center}.pcalbar{padding:12px}.pcalbar .btn{flex:1;justify-content:center;padding:11px 14px}}
+/* Admin: kven er ikkje ledig */
+.busyl{list-style:none;margin:0;padding:0}
+.busyl li{display:grid;grid-template-columns:180px 1fr;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:start}
+.busyl li:last-child{border-bottom:0}
+.busyl .nm b{font-weight:500;display:block}
+.busyl .rg{display:flex;flex-wrap:wrap;gap:6px}
+.busyl .capc{display:inline-block;margin:0;max-width:none}
+@media (max-width:640px){.busyl li{grid-template-columns:1fr;gap:6px}}
 .daylist{padding:12px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .daylist h3{margin:0;font-size:13px;font-weight:600}
 @media (max-width:640px){.day{min-height:52px;padding:4px}.ev b,.ev time{display:none}.ev{padding:0;display:inline-flex}.evs{display:flex;gap:3px;flex-wrap:wrap}.dow{padding:6px 4px;text-align:center}.dn{font-size:11px}}
@@ -372,7 +403,7 @@ button,input,select,textarea{font:inherit;color:inherit}
         <li><b>Nye jobbar dukkar opp øvst</b><span>Trykk «Ta jobben» for å få han.</span></li>
         <li><b>«Dette må du gjere» viser kva som hastar</b><span>Opptak i dag, video som skal leverast og rettingar.</span></li>
         <li><b>Lever med Frame.io-lenke</b><span>Trykk «Lever video», lim inn lenka og send til godkjenning.</span></li>
-        <li><b>Ikkje ledig?</b><span>Trykk «Merk meg opptatt», så blir du ikkje booka.</span></li>
+        <li><b>Ikkje ledig?</b><span>Trykk «Merk opptatt» i kalenderen og så på dagane, så blir du ikkje booka.</span></li>
       </ol>
       <p class="hint" style="margin:0;font-size:13px">Tips: Legg tavla til på heimeskjermen. På iPhone: del-knappen i Safari, så «Legg til på Hjem-skjerm».</p>
       <div class="wf" id="wForm" hidden>
@@ -394,9 +425,14 @@ button,input,select,textarea{font:inherit;color:inherit}
     <div class="ph"><h2>Kommande opptak</h2></div>
     <ul class="next" id="next"></ul>
   </section>
+  <section class="panel" id="pcalPanel" hidden></section>
   <div class="split one" id="split">
     <section class="panel" id="cal"></section>
   </div>
+  <section class="panel" id="busyPanel" hidden>
+    <div class="ph"><h2>Ikkje ledig<span class="sub">neste 3 månader</span></h2></div>
+    <ul class="busyl" id="busyList"></ul>
+  </section>
   <section class="panel" id="capPanel" hidden>
     <div class="ph"><h2 id="capTitle">Kapasitet</h2><div class="calnav">
       <button class="btn ghost icon" type="button" data-cap="-1" aria-label="Førre veke">‹</button>
@@ -490,7 +526,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       <a class="btn" href="https://claude.ai/artifact/DW7N9KunRzrQwf5k14CPVa" target="_blank" rel="noopener">Opne blueprint for boligfilm ↗</a>
     </section>
     <section><h3>Ikkje ledig?</h3>
-      <p>Trykk «Merk meg opptatt» øvst, så blir du ikkje booka dei dagane.</p>
+      <p>Trykk «Merk opptatt» i kalenderen og så på dagane du ikkje kan. Då blir du ikkje booka dei dagane.</p>
     </section>
     <section><h3>Spørsmål</h3>
       <p>Send e-post til <a href="mailto:hei@aroyfilm.no">hei@aroyfilm.no</a>.</p>
@@ -610,7 +646,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     }
     msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); }
   }
-  var lt; function reload(){ clearTimeout(lt); lt=setTimeout(loadAll,400); }   // eiga lagring + sanntidsmeldinga blir slegne saman til éi henting
+  var lt; function reload(){ clearTimeout(lt); lt=setTimeout(function(){ if(blkBusy) reload(); else loadAll(); },400); }   // eiga lagring + sanntidsmeldinga blir slegne saman til éi henting
 
   // ---- render ----
   function render(){
@@ -629,10 +665,10 @@ button,input,select,textarea{font:inherit;color:inherit}
         mb('Forteneste i '+mn,kr(oms-hon),'etter honorar, eks. mva');
       if(kpiAnim){ kpiAnim=false; [].forEach.call($('kpis').querySelectorAll('.v'),function(v){ v.classList.add('count'); }); }
     } else {
-      renderNext(); renderOffers(); renderInvoice();
+      renderNext(); renderPcal(); renderOffers(); renderInvoice();
     }
     // Berre panela som synest, blir teikna.
-    renderTodo(); if(!$('split').hidden) renderCal(); if(!$('capPanel').hidden) renderCap(); if(!$('monthPanel').hidden) renderMonth(); if(!$('listPanel').hidden) renderTable();
+    renderTodo(); if(!$('split').hidden) renderCal(); if(!$('capPanel').hidden) renderCap(); if(!$('monthPanel').hidden) renderMonth(); if(!$('busyPanel').hidden) renderBusy(); if(!$('listPanel').hidden) renderTable();
     if(isOwner&&OV==='kundar'&&!openK&&!newK) renderKundar();   // ikkje skriv over eit skjema du held på med
   }
   var YEAR=0, kpiAnim=true;
@@ -655,12 +691,13 @@ button,input,select,textarea{font:inherit;color:inherit}
     $('main').hidden=adm; $('admin').hidden=!adm;
     $('todoPanel').hidden=o&&v!=='idag';
     $('kpis').hidden=!(o&&v==='idag'); $('capPanel').hidden=!(o&&v==='idag');
-    $('nextPanel').hidden=o;
+    $('nextPanel').hidden=o; $('pcalPanel').hidden=o;
+    $('busyPanel').hidden=!(o&&v==='oversikt');
     $('split').hidden=!o||v!=='oversikt';   // partnaren har «Kommande opptak» i staden $('listPanel').hidden=o&&v!=='oversikt';
     $('monthPanel').hidden=!(o&&v==='oversikt'); $('backupPanel').hidden=!(o&&v==='oversikt');
     $('kundePanel').hidden=!(o&&v==='kundar');
     $('nav').hidden=!o; $('areas').hidden=!o||v==='kundar'||adm;
-    $('newBtn').hidden=!o||adm; $('blockBtn').hidden=o||!!PV; $('infoBtn').hidden=o;
+    $('newBtn').hidden=!o||adm; $('blockBtn').hidden=true;   // partnaren merkar opptatt i kalenderen $('infoBtn').hidden=o;
     $('todoTitle').textContent=o?'Treng deg':'Dette må du gjere';
     $('brandSub').textContent=o?'Oppdrag':'Mine jobbar';
     if(!o&&profile){ $('who').textContent=(profile.namn||'')+(profile.omrade?' · '+profile.omrade:''); }
@@ -916,6 +953,76 @@ button,input,select,textarea{font:inherit;color:inherit}
       .map(function(b){ return {key:b.id,uid:b.fotograf_id,fra:b.fra,til:b.til||b.fra,notat:b.notat}; }); }
   function blockDays(b){ var r=[]; if(!b.fra) return r; var p=b.fra.split('-'), x=new Date(+p[0],+p[1]-1,+p[2]), end=b.til&&b.til>=b.fra?b.til:b.fra; for(var i=0;i<62;i++){ var k=iso(x.getFullYear(),x.getMonth(),x.getDate()); if(k>end) break; r.push(k); x.setDate(x.getDate()+1); } return r; }
   function blocksOn(day,uid){ return blockList().filter(function(b){ return (!uid||b.uid===uid) && blockDays(b).indexOf(day)>=0; }); }
+  // ---- partnarkalender: merk heile dagar som opptatt ----
+  // Kvar dag blir lagra i «opptatt» som fra=til. Ligg dagen inne i eit lengre tidsrom, blir det delt i to.
+  var pcY=now.getFullYear(), pcM=now.getMonth(), pcMark=false, pend={}, blkQ=Promise.resolve(), blkBusy=0;
+  function addDay(d,n){ var p=d.split('-'), x=new Date(+p[0],+p[1]-1,+p[2]+n); return iso(x.getFullYear(),x.getMonth(),x.getDate()); }
+  function myBlockOn(d){ return blocks.find(function(b){ return b.fotograf_id===me && b.fra<=d && (b.til||b.fra)>=d; }); }
+  function isBusy(d){ return pend.hasOwnProperty(d) ? pend[d] : !!myBlockOn(d); }
+  function renderPcal(){
+    var first=new Date(pcY,pcM,1), start=(first.getDay()+6)%7, nDays=new Date(pcY,pcM+1,0).getDate();
+    var cap=MND[pcM].charAt(0).toUpperCase()+MND[pcM].slice(1), ro=!!PV;
+    var h='<div class="ph"><h2>Kalender</h2><div class="calnav"><span class="t" style="min-width:0;margin-right:6px">'+cap+' '+pcY+'</span>'+
+      '<button class="btn ghost icon" type="button" data-pcal="-1" aria-label="Førre månad">‹</button>'+
+      '<button class="btn ghost icon" type="button" data-pcal="1" aria-label="Neste månad">›</button></div></div>';
+    if(!ro) h+='<div class="pcalbar"><button class="btn" type="button" id="pcalMode" aria-pressed="'+pcMark+'">'+(pcMark?'Ferdig':'Merk opptatt')+'</button>'+
+      '<span class="hint">'+(pcMark?'Trykk på dagane du ikkje kan jobbe. Trykk igjen for å fjerne.':'Merk dagane du ikkje kan, så blir du ikkje booka då.')+'</span></div>';
+    h+='<div class="grid pcal'+(pcMark&&!ro?' marking':'')+'">';
+    ['Må','Ty','On','To','Fr','La','Sø'].forEach(function(d){h+='<div class="dow">'+d+'</div>'});
+    var cells=Math.ceil((start+nDays)/7)*7;
+    for(var i=0;i<cells;i++){
+      var dt=new Date(pcY,pcM,i-start+1), key=iso(dt.getFullYear(),dt.getMonth(),dt.getDate());
+      var js=view.filter(function(it){ return it.o.status!=='tilbod' && onDay(it.o,key); }), busy=isBusy(key), past=key<TODAY;
+      var lab=dt.getDate()+'. '+MND[dt.getMonth()]+(js.length?', '+js.length+' opptak':'')+(busy?', opptatt':'');
+      h+='<button type="button" class="pday'+(dt.getMonth()!==pcM?' out':'')+(key===TODAY?' today':'')+(past?' past':'')+(busy?' busy':'')+'" data-pday="'+key+'" aria-label="'+esc(lab)+'"'+(pcMark&&!ro&&!past?' aria-pressed="'+busy+'"':'')+'>'+
+        '<span class="dn">'+dt.getDate()+'</span>'+
+        js.slice(0,2).map(function(it){ return '<span class="pj"><i class="dot" style="--c:'+sc(it.o.status)+'"></i><b>'+esc(it.o.adresse||'Opptak')+'</b></span>'; }).join('')+
+        (busy?'<span class="pb">Opptatt</span>':'')+'</button>';
+    }
+    h+='</div><div class="plegend"><span><i class="dot" style="--c:var(--s-booka)"></i>Opptak</span><span><i class="sw"></i>Opptatt</span></div>';
+    $('pcalPanel').innerHTML=h;
+  }
+  function toggleBusy(d){
+    if(d<TODAY){ toast('Du kan ikkje endre dagar som har vore.'); return; }
+    pend[d]=!isBusy(d); renderPcal();
+    blkBusy++;
+    blkQ=blkQ.then(function(){ return saveBusy(d); }).catch(function(err){ toast(writeErr(err)); pend={}; }).then(function(){
+      if(--blkBusy===0){ pend={}; renderPcal(); reload(); } });
+  }
+  // Skriv éin dag til databasen. Køyrer éin om gongen, så rekkjefølgja held.
+  async function saveBusy(d){
+    if(!pend.hasOwnProperty(d)) return;   // ei tidlegare lagring feila, og alt blir henta på nytt
+    var want=pend[d], b=myBlockOn(d);
+    if(want===!!b) return;
+    if(want){
+      var r=await run(sb.from('opptatt').insert({fra:d,til:d,notat:''}).select('id').single());
+      blocks.push({id:(r.data&&r.data.id)||newId(),fotograf_id:me,fra:d,til:d,notat:''}); return;
+    }
+    var til=b.til||b.fra;
+    if(b.fra===d&&til===d){ await run(sb.from('opptatt').delete().eq('id',b.id)); blocks=blocks.filter(function(x){return x!==b}); }
+    else if(b.fra===d){ await run(sb.from('opptatt').update({fra:addDay(d,1)}).eq('id',b.id)); b.fra=addDay(d,1); }
+    else if(til===d){ await run(sb.from('opptatt').update({til:addDay(d,-1)}).eq('id',b.id)); b.til=addDay(d,-1); }
+    else {
+      await run(sb.from('opptatt').update({til:addDay(d,-1)}).eq('id',b.id)); b.til=addDay(d,-1);
+      var r2=await run(sb.from('opptatt').insert({fra:addDay(d,1),til:til,notat:b.notat||''}).select('id').single());
+      blocks.push({id:(r2.data&&r2.data.id)||newId(),fotograf_id:me,fra:addDay(d,1),til:til,notat:b.notat||''});
+    }
+  }
+  // Admin: kva dagar kvar partnar ikkje kan, slått saman til tidsrom.
+  function renderBusy(){
+    var end=addDay(TODAY,92), per={};
+    blockList().forEach(function(b){ blockDays(b).forEach(function(d){ if(d<TODAY||d>end) return; var m=per[b.uid]||(per[b.uid]={}); if(!m[d]) m[d]=b.notat||''; }); });
+    var uids=Object.keys(per).filter(function(u){return photogs[u]}).sort(function(a,b){return photogs[a].namn.localeCompare(photogs[b].namn)});
+    if(!uids.length){ $('busyList').innerHTML='<li style="display:block"><span class="tag">Alle partnarane er ledige. Dagar dei merkar som opptatt, dukkar opp her.</span></li>'; return; }
+    $('busyList').innerHTML=uids.map(function(u){
+      var ds=Object.keys(per[u]).sort(), rg=[];
+      ds.forEach(function(d){ var l=rg[rg.length-1]; if(l&&addDay(l.til,1)===d){ l.til=d; if(per[u][d]&&l.n.indexOf(per[u][d])<0) l.n.push(per[u][d]); } else rg.push({fra:d,til:d,n:per[u][d]?[per[u][d]]:[]}); });
+      return '<li><div class="nm"><b>'+esc(photogs[u].namn)+'</b><span class="tag">'+esc(photogs[u].omrade||'')+' · '+ds.length+(ds.length===1?' dag':' dagar')+'</span></div><div class="rg">'+
+        rg.map(function(r){ return '<span class="capc busy">'+esc(rangeTxt(r.fra,r.til))+(r.n.length?' · '+esc(r.n.join(', ')):'')+'</span>'; }).join('')+'</div></li>';
+    }).join('');
+  }
+  function rangeTxt(a,b){ if(a===b) return dayTxt(a); var p=a.split('-'), q=b.split('-'); return (p[1]===q[1]?(+p[2])+'.':shortDate(a))+'–'+shortDate(b); }
+  function dayTxt(d){ var p=d.split('-'), x=new Date(+p[0],+p[1]-1,+p[2]); return DAG[(x.getDay()+6)%7].slice(0,3).toLowerCase()+' '+shortDate(d); }
   function capRows(){
     var rows=Object.keys(photogs).filter(function(u){return area==='Alle'||photogs[u].omrade===area}).map(function(u){return {uid:u,namn:photogs[u].namn||'Fotograf',omr:photogs[u].omrade||''}});
     var names={}; view.forEach(function(it){ if(!it.uid&&it.o.fotograf&&!it.o.utlyst) names[it.o.fotograf]=it.o.omrade||''; });
@@ -1077,7 +1184,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   var PV=null;
   function enterPreview(uid){
     var p=allProfiles.find(function(x){return x.id===uid}); if(!p) return;
-    PV={me:me,profile:profile}; me=uid; profile=p; isOwner=false; kpi=null; selDay=null;
+    PV={me:me,profile:profile}; me=uid; profile=p; isOwner=false; kpi=null; selDay=null; pcMark=false; pcY=now.getFullYear(); pcM=now.getMonth();
     $('pvName').textContent=p.namn||p.email; $('pvBar').hidden=false;
     rebuild(); window.scrollTo(0,0);
   }
@@ -1167,6 +1274,16 @@ button,input,select,textarea{font:inherit;color:inherit}
     if((b=t.closest('[data-knewjob]'))){ openDrawer(null,{kunde:b.getAttribute('data-knewjob')}); return; }
     if((b=t.closest('[data-kopen]'))){ var kid=b.getAttribute('data-kopen'); openK=(openK===kid?null:kid); newK=false; renderKundar(); return; }
     if(t.closest('.kdet')&&!t.closest('[data-open]')) return;
+    if((b=t.closest('[data-pcal]'))){ pcM+=+b.getAttribute('data-pcal'); if(pcM<0){pcM=11;pcY--;} if(pcM>11){pcM=0;pcY++;} renderPcal(); return; }
+    if(t.closest('#pcalMode')){ if(PV) return; pcMark=!pcMark; renderPcal(); return; }
+    if((b=t.closest('[data-pday]'))){ var pd=b.getAttribute('data-pday');
+      if(pcMark&&!PV){ toggleBusy(pd); return; }
+      var pj=view.find(function(it){ return it.o.status!=='tilbod'&&onDay(it.o,pd); });
+      if(pj){ openJob(pj.key); return; }
+      var pb=myBlockOn(pd);
+      if(pb&&!PV){ openBlock(pb.id); return; }
+      if(PV){ toast('Førehandsvising. Ingenting blir endra.'); return; }
+      if(pd>=TODAY) toast('Trykk «Merk opptatt» for å merke dagen.'); return; }
     if((b=t.closest('[data-pv]'))){ enterPreview(b.getAttribute('data-pv')); return; }
     if((b=t.closest('[data-pvexit]'))){ exitPreview(); return; }
     if(PV&&t.closest('[data-take],[data-decline],[data-lever],[data-addday],[data-capcell],[data-blk],[data-addrow],[data-delrow],#invCopy')){ toast('Førehandsvising. Ingenting blir endra.'); return; }

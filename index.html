@@ -371,7 +371,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 
 <section class="panel onb" id="noaccess" hidden>
   <h1 id="na-title">Ingen tilgang enno</h1>
-  <p id="na-text">Du er logga inn, men har ikkje fått tilgang. Be Jacob invitere deg.</p>
+  <p id="na-text">Du er logga inn, men har ikkje fått tilgang enno. Ta kontakt med Aroy Film på hei@aroyfilm.no.</p>
   <ul class="perks" id="na-perks" hidden>
     <li><b>Alle oppdraga dine på éin stad</b><span>Kva, kvar, når og kva du får betalt</span></li>
     <li><b>Lever video med éi lenke</b><span>Frame.io-lenka rett inn på jobben</span></li>
@@ -584,7 +584,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   var rows=[], blocks=[], allProfiles=[], invites=[], photogs={}, capOff=0, mode='job', warnOK=false;
   var PRIS={}, HON={}, AVSLAG=[], offers=[], MVA=0.25, OV='idag';
   try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
-  var MEG='Jacob';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
+  var MEG='Aroy Film';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
   // Fakturainfo til partnarane. Standardverdiar; Jacob endrar dei under Brukarar (tabellen innstillingar).
   var FAKTURA={ namn:'AROYFILM', orgnr:'930 795 577', epost:'hei@aroyfilm.no', adresse:'', merking:'Namnet ditt, månaden og tittelen på kvart oppdrag', samle:'Du kan samle fleire oppdrag på éin faktura, men kvart oppdrag må ha si eiga linje.', frist:'' };
   function kr(n){ n=Math.round(+n||0); return n.toLocaleString('nb-NO').replace(/,/g,' ')+' kr'; }
@@ -897,7 +897,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     try{ var r=await sb.rpc(take?'ta_jobb':'avsla_jobb',{p_id:id}); if(r.error) throw r.error;
       if(!take&&!r.data) throw new Error('ikkje avslått');
       if(!take) DECLINED[id]=1;
-      toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått. Jacob får beskjed.'); reload();
+      toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått. Vi har fått beskjed.'); reload();
     }catch(err){ if(card) card.classList.remove('gone'); toast(take?writeErr(err):'Klarte ikkje avslå. Prøv igjen.'); reload(); }
   }
 
@@ -918,7 +918,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     $('listTitle').firstChild.nodeValue = isOwner?'Oppdrag':'Mine jobbar';
     $('jobcount').innerHTML=(list.length?String(list.length):'')+(kpi?' · '+KPIL[kpi]+'<button type="button" class="clearf" data-clearkpi>Vis alle</button>':'');
     [].forEach.call(document.querySelectorAll('[data-lmode]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-lmode')===listMode&&!kpi?'true':'false')});
-    if(!items.length){ $('tbl').innerHTML='<tr><td class="empty">'+(isOwner?'Ingen jobbar enno. Trykk «+ Nytt oppdrag», eller vel ein dag i kalenderen.':'Ingen jobbar enno. Nye jobbar dukkar opp øvst når Jacob sender dei.')+'</td></tr>'; return; }
+    if(!items.length){ $('tbl').innerHTML='<tr><td class="empty">'+(isOwner?'Ingen jobbar enno. Trykk «+ Nytt oppdrag», eller vel ein dag i kalenderen.':'Ingen jobbar enno. Nye jobbar dukkar opp øvst når vi sender dei.')+'</td></tr>'; return; }
     if(!list.length){ $('tbl').innerHTML='<tr><td class="empty">'+(listMode==='fakturert'&&!kpi?'Ingen fakturerte jobbar enno.':'Ingen jobbar her.')+'</td></tr>'; return; }
     var ch=STATUSES;
     var opts=function(cur){var l=ch.slice(); if(!SL[cur]||!ch.some(function(s){return s.k===cur})) l=l.concat([SL[cur]||STATUSES[0]]); return l.map(function(s){return '<option value="'+s.k+'"'+(s.k===cur?' selected':'')+'>'+s.l+'</option>'}).join('')};
@@ -1064,7 +1064,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(uid) blockList().forEach(function(b){ if(b.uid!==uid) return; blockDays(b).forEach(function(d){ if(dates.indexOf(d)>=0) out.push(shortDate(d)+': merka som opptatt'+(b.notat?' ('+b.notat+')':'')); }); });
     return out; }
   function formDates(){ return [].map.call(document.querySelectorAll('#f-days .d-dato'),function(i){return i.value}).filter(Boolean); }
-  function isMeg(n){ n=String(n||'').trim().toLowerCase(); return !n||n===MEG.toLowerCase()||n==='aroy film'||n==='aroyfilm'; }
+  function isMeg(n){ n=String(n||'').trim().toLowerCase(); return !n||n===MEG.toLowerCase()||n==='aroy film'||n==='aroyfilm'||n==='jacob'; }   // «jacob»: eldre eigne jobbar er lagra med det namnet
   function formWho(){ var s=$('f-foto'); var u=s?s.value:'';
     if(u==='_meg') return {uid:null,name:MEG};
     if(u==='_annan') return {uid:null,name:(($('f-fotograf')||{}).value||'').trim()};
@@ -1084,7 +1084,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     $('dbody').innerHTML='<dl class="kv2">'+kv('Kunde',esc(o.kunde))+kv('Type',esc(o.type))+kv('Opptak',dg||'Ikkje sett')+kv('Område',esc(o.omrade))+
       kv('Honorar',esc(honText(o.honorar,myMva())))+kv('Status',esc((SL[o.status]||{}).l||''))+
       kv('Video',o.lenke&&/^https?:\/\//.test(o.lenke)?'<a href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
-      kv('Notat frå Jacob',o.notat?esc(o.notat).replace(/\n/g,'<br>'):'')+'</dl>'+
+      kv('Notat frå Aroy Film',o.notat?esc(o.notat).replace(/\n/g,'<br>'):'')+'</dl>'+
       (WORK.indexOf(o.status)>=0?'<button class="btn primary" type="button" data-lever="'+esc(key)+'" style="justify-content:center">'+(o.status==='retting'?'Lever ny versjon':'Lever video')+'</button>':'')+
       '<p class="hint" style="margin:0;font-size:13px">Er noko feil? Send e-post til <a href="mailto:hei@aroyfilm.no" style="color:inherit">hei@aroyfilm.no</a>.</p>';
     $('saveBtn').hidden=true; $('delBtn').hidden=true;
@@ -1096,7 +1096,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     mode='lev'; editKey=key; warnOK=false;
     $('dtitle').textContent=ret?'Lever ny versjon':'Lever video';
     $('dbody').innerHTML='<div><b style="font-size:17px;display:block">'+esc(o.adresse||'Oppdrag')+'</b><span class="tag">'+esc([o.kunde,o.type,fmtDays(o)].filter(function(x){return x&&x!=='–'}).join(' · '))+'</span></div>'+
-      (ret?'<div class="warn"><b>Kunden vil ha rettingar.</b>'+(o.notat?'<br>'+esc(o.notat).replace(/\n/g,'<br>'):' Sjå notatet frå Jacob, eller ta kontakt.')+'</div>':'')+
+      (ret?'<div class="warn"><b>Kunden vil ha rettingar.</b>'+(o.notat?'<br>'+esc(o.notat).replace(/\n/g,'<br>'):' Sjå notatet på jobben, eller ta kontakt med oss.')+'</div>':'')+
       '<label class="fld big"><span>Lim inn Frame.io-lenka</span><input type="text" id="l-lenke" inputmode="url" enterkeyhint="send" autocomplete="off" autocapitalize="off" placeholder="https://f.io/…"></label>'+
       (navigator.clipboard&&navigator.clipboard.readText?'<button class="btn" type="button" data-paste style="align-self:flex-start">Lim inn frå utklippstavla</button>':'')+
       '<button class="btn primary" type="submit" style="justify-content:center">Lever video til godkjenning</button>'+
@@ -1110,7 +1110,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     mode='blk'; editKey=key||null;
     var b=key?blockList().find(function(x){return x.key===key}):null;
     $('dtitle').textContent=b?'Opptatt':'Merk meg opptatt';
-    $('dbody').innerHTML='<p class="tag" style="white-space:normal">Jacob ser at du ikkje er ledig desse dagane, så du ikkje blir dobbelbooka. Han ser òg notatet.</p>'+
+    $('dbody').innerHTML='<p class="tag" style="white-space:normal">Vi ser at du ikkje er ledig desse dagane, så du ikkje blir dobbelbooka. Vi ser òg notatet.</p>'+
       '<div class="two"><label class="fld"><span>Frå</span><input type="date" id="b-fra" value="'+esc(b?b.fra:TODAY)+'"></label><label class="fld"><span>Til</span><input type="date" id="b-til" value="'+esc(b?b.til:'')+'"></label></div>'+
       '<label class="fld"><span>Notat (valfritt)</span><input id="b-notat" value="'+esc(b?b.notat:'')+'" placeholder="Ferie, anna jobb"></label>';
     $('delBtn').hidden=!b; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed; $('saveBtn').textContent='Lagre'; $('saveBtn').hidden=false;
@@ -1402,7 +1402,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   $('l-back').addEventListener('click',function(){ $('codeForm').hidden=true; $('loginForm').hidden=false; $('l-code').value=''; lmsg(''); $('l-intro').textContent='Skriv inn e-posten din, så får du ein kode på mail. Du treng ikkje passord.'; });
   // Ny partnar: skriv namn og område, be om tilgang, og vent til Jacob godkjenner.
   function askAccess(){
-    var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Jacob har fått beskjed og godkjenner deg så snart han kan. Du treng ikkje gjere noko meir. Sida opnar seg av seg sjølv når du er godkjend.'; $('na-form').hidden=true; $('na-perks').hidden=true;
+    var waiting=function(){ $('na-title').textContent='Takk!'; $('na-text').textContent='Vi har fått førespurnaden din og godkjenner deg så snart vi kan. Du treng ikkje gjere noko meir. Sida opnar seg av seg sjølv når du er godkjend.'; $('na-form').hidden=true; $('na-perks').hidden=true;
       setInterval(async function(){ if(document.hidden) return; var r=await sb.from('profiles').select('rolle,aktiv').eq('id',me).maybeSingle(); if(r.data&&r.data.rolle!=='ingen'&&r.data.aktiv) location.reload(); },15000); };
     if(profile.onskjer_tilgang){ waiting(); return; }
     $('na-title').textContent='Bli partnar hos Aroy Film'; $('na-text').textContent='Oppdragstavla er der du får jobbar frå Aroy Film, leverer video og finn fakturagrunnlaget ditt.';
@@ -1441,7 +1441,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(!profile||profile.rolle==='ingen'||!profile.aktiv){
       $('noaccess').hidden=false;
       if(profile&&profile.rolle==='ingen'){ askAccess(); return; }
-      $('na-text').textContent = profile&&!profile.aktiv ? 'Tilgangen din er sett på pause. Ta kontakt med Jacob.' : 'Du er logga inn som '+myEmail+', men har ikkje fått tilgang. Be Jacob invitere deg.';
+      $('na-text').textContent = profile&&!profile.aktiv ? 'Tilgangen din er sett på pause. Ta kontakt med oss på hei@aroyfilm.no.' : 'Du er logga inn som '+myEmail+', men har ikkje fått tilgang enno. Ta kontakt med Aroy Film på hei@aroyfilm.no.';
       return;
     }
     isOwner = profile.rolle==='admin';

@@ -621,7 +621,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   // Kvar jobb: {key (rad-id), uid (fotograf-id eller null), o (felt brukt i visinga)}
   function rebuild(){
     var mine=rows;
-    if(!isOwner){ var myOmr=(profile&&profile.omrade)||''; offers=rows.filter(function(r){return r.utlyst&&!r.fotograf_id&&(r.utlyst_til===me||(!r.utlyst_til&&r.utlyst_omrade&&r.utlyst_omrade===myOmr))&&!AVSLAG.some(function(a){return a.oppdrag_id===r.id&&a.fotograf_id===me})}); mine=rows.filter(function(r){return r.fotograf_id===me}); }
+    if(!isOwner){ var myOmr=(profile&&profile.omrade)||''; offers=rows.filter(function(r){return r.utlyst&&!r.fotograf_id&&(r.utlyst_til===me||(!r.utlyst_til&&r.utlyst_omrade&&r.utlyst_omrade===myOmr))&&!DECLINED[r.id]&&!AVSLAG.some(function(a){return a.oppdrag_id===r.id&&a.fotograf_id===me})}); mine=rows.filter(function(r){return r.fotograf_id===me}); }
     items=mine.map(function(r){
       var dg=Array.isArray(r.dagar)?r.dagar:[];
       var p=r.fotograf_id?(photogs[r.fotograf_id]||{}):{};
@@ -909,11 +909,14 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       '</div>';
     }).join('');
   }
+  var DECLINED={};   // jobbar partnaren har sagt nei til i denne økta, så dei forsvinn med ein gong
   async function offerAction(id,take){
     var card=(document.querySelector('[data-take="'+id+'"]')||{closest:function(){return null}}).closest('.offer'); if(card) card.classList.add('gone');
     try{ var r=await sb.rpc(take?'ta_jobb':'avsla_jobb',{p_id:id}); if(r.error) throw r.error;
-      toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått'); reload();
-    }catch(err){ toast(writeErr(err)); }
+      if(!take&&!r.data) throw new Error('ikkje avslått');
+      if(!take) DECLINED[id]=1;
+      toast(take?(r.data?'Jobben er din':'Jobben er alt teken av nokon andre'):'Avslått. Jacob får beskjed.'); reload();
+    }catch(err){ if(card) card.classList.remove('gone'); toast(take?writeErr(err):'Klarte ikkje avslå. Prøv igjen.'); reload(); }
   }
 
   // Partnaren kan berre flytte jobben fram til levert. Rettingar, godkjent og fakturert set Jacob.
@@ -1304,7 +1307,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if((b=t.closest('[data-uact]'))){ userAction(b); return; }
     if((b=t.closest('[data-quick]'))){ quick(b); return; }
     if((b=t.closest('[data-take]'))){ if(b.disabled) return; b.disabled=true; b.textContent='Tek jobben…'; offerAction(b.getAttribute('data-take'),true); return; }
-    if((b=t.closest('[data-decline]'))){ if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen for å avslå'; return; } offerAction(b.getAttribute('data-decline'),false); return; }
+    if((b=t.closest('[data-decline]'))){ if(b.disabled) return; b.disabled=true; b.textContent='Avslår…'; var tk=b.parentNode.querySelector('[data-take]'); if(tk) tk.disabled=true; offerAction(b.getAttribute('data-decline'),false); return; }   // eitt trykk; Jacob får mail
     if((b=t.closest('[data-kat]'))){ draft.kat=b.getAttribute('data-kat'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
     if((b=t.closest('[data-typ]'))){ draft.type=b.getAttribute('data-typ'); draft.newType=false; $('f-typebox').innerHTML=typeHTML(); return; }
     if((b=t.closest('[data-newtyp]'))){ draft.newType=true; draft.kat=''; $('f-typebox').innerHTML=typeHTML(); $('f-newtype').focus(); return; }

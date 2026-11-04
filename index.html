@@ -1198,7 +1198,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(mode==='lev'){
       var ln=$('l-lenke').value.trim();
       if(!/^https?:\/\/\S+\.\S+/.test(ln)){ $('l-lenke').focus(); toast('Lim inn heile lenka, til dømes https://f.io/…'); return; }
-      try{ await run(sb.from('oppdrag').update({lenke:ln,status:'levert',retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',editKey));
+      try{ var lv=await run(sb.rpc('lever_video',{p_id:editKey,p_lenke:ln})); if(!lv.data) throw new Error('ikkje levert');   // berre denne vegen er open for partnarar
         closeDrawer(); toast('Videoen er levert til godkjenning'); reload(); }catch(err){ toast(writeErr(err)); }
       return;
     }

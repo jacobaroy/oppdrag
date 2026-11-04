@@ -1130,7 +1130,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     else if(isUtl) cur=it.o.utlyst_til||'_utlys';
     else if(preset&&preset._uid) cur=preset._uid;
     else cur = isMeg(o.fotograf) ? '_meg' : '_annan';
-    var ask = isUtl && !!it.o.utlyst_til;
+    var ask = it ? (isUtl && !!it.o.utlyst_til) : true;   // nye jobbar: spør fotografen først som standard
     var fotoField='<label class="fld"><span>Kven filmar</span><select id="f-foto">'+
       '<option value="_meg"'+(cur==='_meg'?' selected':'')+'>Meg (Aroy Film). Berre du ser oppdraget</option>'+
       uids.map(function(u){return '<option value="'+esc(u)+'"'+(u===cur?' selected':'')+'>'+esc(photogs[u].namn||'Fotograf')+(photogs[u].omrade?' · '+esc(photogs[u].omrade):'')+'</option>'}).join('')+

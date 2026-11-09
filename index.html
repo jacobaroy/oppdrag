@@ -831,7 +831,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var rh = reqs.map(function(p){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>'+esc(p.namn||p.email)+' vil bli partnar</b><span>'+esc([p.omrade,p.telefon,p.firma,p.email].filter(Boolean).join(' · '))+'</span></div>'+
       '<div class="reqa"><button class="btn primary ubtn" type="button" data-uact="gi" data-id="'+esc(p.id)+'">Godkjenn</button><button class="btn ubtn" type="button" data-uact="avvis" data-id="'+esc(p.id)+'">Avvis</button></div></li>'; }).join('');
     // Nye hendingar i Google Kalender («Aroy Film oppdrag») som ikkje er oppdrag enno.
-    rh += (isOwner?KALF:[]).map(function(f){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>Nytt i kalenderen: '+esc(f.tittel||'Utan tittel')+'</b><span>'+esc([f.dato?shortDate(f.dato)+(f.tid?' kl. '+f.tid:''):'',f.stad].filter(Boolean).join(' · '))+'</span></div>'+
+    rh += (isOwner?KALF:[]).map(function(f){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>Nytt i kalenderen: '+esc(f.tittel||'Utan tittel')+'</b><span>'+esc([f.dato?shortDate(f.dato)+(f.tid?' kl. '+f.tid:''):'',f.omrade,f.stad].filter(Boolean).join(' · '))+'</span></div>'+
       '<div class="reqa"><button class="btn primary ubtn" type="button" data-kreg="'+esc(f.id)+'">Registrer</button><button class="btn ubtn" type="button" data-kign="'+esc(f.id)+'">Ignorer</button></div></li>'; }).join('');
     if(rh&&!list.length){ $('todo').innerHTML=rh; return; }
     var QB={levert:['godkjent','Godkjent'],godkjent:['fakturert','Fakturert']};
@@ -1291,7 +1291,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if((b=t.closest('[data-logout]'))){ sb.auth.signOut().then(function(){ location.reload(); }); return; }
     if((b=t.closest('[data-ov]'))){ OV=b.getAttribute('data-ov'); kpiAnim=true; try{localStorage.setItem('aroy-side',OV)}catch(err){} kpi=null; openK=null; newK=false; render(); if(OV==='brukarar') renderUsers(); window.scrollTo(0,0); return; }
     if((b=t.closest('[data-uact]'))){ userAction(b); return; }
-    if((b=t.closest('[data-kreg]'))){ var kf=KALF.find(function(f){return f.id===b.getAttribute('data-kreg')}); if(kf) openDrawer(null,{adresse:kf.tittel,dagar:kf.dato?[{dato:kf.dato,tid:kf.tid||''}]:[],notat:[kf.stad,kf.notat].filter(Boolean).join('\n'),_kal:kf.id}); return; }
+    if((b=t.closest('[data-kreg]'))){ var kf=KALF.find(function(f){return f.id===b.getAttribute('data-kreg')}); if(kf) openDrawer(null,{adresse:kf.tittel,omrade:kf.omrade||'',dagar:kf.dato?[{dato:kf.dato,tid:kf.tid||''}]:[],notat:[kf.stad,kf.notat].filter(Boolean).join('\n'),_kal:kf.id}); return; }
     if((b=t.closest('[data-kign]'))){ kalIgnorer(b); return; }
     if((b=t.closest('[data-quick]'))){ quick(b); return; }
     if((b=t.closest('[data-dok]'))){ if(!b.disabled) datoSvar(b,true); return; }

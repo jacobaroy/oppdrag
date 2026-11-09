@@ -46,6 +46,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   .fld input,.fld select,.fld textarea,.ksearch{font-size:16px}   /* under 16px zoomar iPhone inn på feltet */
   .cap td.capday{width:70px;white-space:nowrap}.cap .capc{max-width:none}}
 .wrap{max-width:1180px;margin:0 auto;padding-block:24px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.avtekst{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:6px 16px 14px;font-size:14px;line-height:1.55;text-align:left}
+.avtekst h3{font-size:15px;margin:16px 0 4px}.avtekst p{margin:5px 0}.avtekst li{margin:3px 0}.avtekst ul{margin:4px 0;padding-left:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
 .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
 .ph h2{margin:0;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
@@ -369,6 +371,15 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   <p class="hint" id="l-msg" hidden></p>
 </section>
 
+<section class="panel onb" id="avtalePanel" hidden>
+  <h1>Partnaravtale</h1>
+  <p id="av-intro">Før du startar: les avtalen og kryss av nedst. Du får ein kopi på mail.</p>
+  <div class="avtekst" id="av-tekst"></div>
+  <label class="chk2"><input type="checkbox" id="av-ok"> <span>Eg har lese og godtek partnaravtalen med Aroy Film (versjon <b id="av-v"></b>)</span></label>
+  <button class="btn primary" type="button" id="av-godta" disabled style="justify-content:center">Godta og gå vidare</button>
+  <button class="btn" type="button" data-logout>Logg ut</button>
+</section>
+
 <section class="panel onb" id="noaccess" hidden>
   <h1 id="na-title">Ingen tilgang enno</h1>
   <p id="na-text">Du er logga inn, men har ikkje fått tilgang enno. Ta kontakt med Aroy Film på hei@aroyfilm.no.</p>
@@ -494,6 +505,14 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       <div style="display:flex;gap:8px"><button class="btn" type="button" id="fakEdit">Rediger</button><button class="btn primary" type="submit" id="fakSave" hidden>Lagre fakturainfo</button><button class="btn ghost" type="button" id="fakCancel" hidden>Avbryt</button></div>
     </form>
   </details>
+  <details class="panel fold" id="avtAdmin">
+    <summary class="ph"><h2>Partnaravtale<span class="sub" id="avtSub"></span></h2><span class="chev" aria-hidden="true"></span></summary>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <p class="hint" style="margin:0;font-size:13px" id="avtHint"></p>
+      <textarea id="avt-tekst" readonly rows="16" style="width:100%;font:inherit;font-size:14px;line-height:1.5;background:transparent;color:inherit;border:1px solid var(--line);border-radius:12px;padding:12px"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="avtEdit">Rediger</button><button class="btn primary" type="button" id="avtPub" hidden>Publiser ny versjon</button><button class="btn ghost" type="button" id="avtCancel" hidden>Avbryt</button></div>
+    </div>
+  </details>
 </main>
 <footer class="foot" id="foot" hidden>Logga inn som <span id="footWho"></span> · <button class="clearf" type="button" data-logout>Logg ut</button></footer>
 <p class="err" id="fatal" hidden style="text-align:center;margin:60px 20px"></p>
@@ -582,7 +601,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 
   var sb=null, me=null, myEmail='', isOwner=false, profile=null;
   var rows=[], blocks=[], allProfiles=[], invites=[], photogs={}, capOff=0, mode='job', warnOK=false;
-  var PRIS={}, HON={}, AVSLAG=[], KALF=[], kalF=null, offers=[], MVA=0.25, OV='idag';
+  var PRIS={}, HON={}, AVSLAG=[], KALF=[], AVTALE=null, GODKJ=[], kalF=null, offers=[], MVA=0.25, OV='idag';
   try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
   var MEG='Aroy Film';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
   // Fakturainfo til partnarane. Standardverdiar; Jacob endrar dei under Brukarar (tabellen innstillingar).
@@ -634,21 +653,24 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   async function loadAll(){
     // Alle tabellane blir henta samtidig, ikkje éin etter éin.
     var q=[sb.from('oppdrag').select('*'), sb.from('opptatt').select('*'), sb.from('oppdrag_honorar').select('*'), sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle()];
-    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'));
+    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'), sb.from('avtale_godkjent').select('*').order('godkjent',{ascending:false}));
+    q.push(sb.from('avtale').select('*').order('versjon',{ascending:false}).limit(1).maybeSingle());   // siste partnaravtale
     var r=await Promise.all(q), r1=r[0];
     if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
     rows=r1.data||[]; blocks=r[1].data||[];
     HON={}; (r[2].data||[]).forEach(function(h){ HON[h.oppdrag_id]=+h.belop; });
     if(r[3].data&&r[3].data.verdi) Object.assign(FAKTURA,r[3].data.verdi);
+    AVTALE=(r[r.length-1]&&r[r.length-1].data)||null;
     if(isOwner){
       allProfiles=r[4].data||[]; invites=r[5].data||[];
       PRIS={}; (r[6].data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
       AVSLAG=r[7].data||[];
       KUNDAR={}; (r[8].data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
       KALF=(r[9]&&r[9].data)||[];   // nye hendingar frå Google Kalender
+      GODKJ=(r[10]&&r[10].data)||[];
       photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade}; });
     }
-    msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); }
+    msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); fillAvt(); }
   }
   var lt; function reload(){ clearTimeout(lt); lt=setTimeout(function(){ if(blkBusy) reload(); else loadAll(); },400); }   // eiga lagring + sanntidsmeldinga blir slegne saman til éi henting
 
@@ -692,8 +714,11 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   function layout(){
     var o=isOwner, v=o?OV:'';
     [].forEach.call(document.querySelectorAll('[data-ov]'),function(b){b.setAttribute('aria-selected',b.getAttribute('data-ov')===OV?'true':'false')});
-    var adm=o&&v==='brukarar';
-    $('main').hidden=adm; $('admin').hidden=!adm;
+    var adm=o&&v==='brukarar', avt=needAvtale();
+    $('main').hidden=adm||avt; $('admin').hidden=!adm; $('foot').hidden=avt||!me;
+    if(avt&&$('avtalePanel').hidden){ $('av-tekst').innerHTML=avtaleHtml(AVTALE.tekst); $('av-v').textContent=AVTALE.versjon; $('av-ok').checked=false; $('av-godta').disabled=true;
+      $('av-intro').textContent=(profile.avtale_versjon?'Partnaravtalen er oppdatert. Les den nye versjonen og kryss av nedst.':'Før du startar: les avtalen og kryss av nedst.')+' Du får ein kopi på mail.'; }
+    $('avtalePanel').hidden=!avt;
     $('todoPanel').hidden=o&&v!=='idag';
     $('kpis').hidden=!(o&&v==='idag'); $('capPanel').hidden=!(o&&v==='idag');
     $('nextPanel').hidden=o; $('pcalPanel').hidden=o;
@@ -1347,6 +1372,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     list.forEach(function(x){
       if(x.p){ var p=x.p, self=p.id===me;
         var st = p.rolle==='ingen'?'<span class="pill2 off">Ingen tilgang</span>':(p.aktiv?'<span class="pill2 on">Aktiv</span>':'<span class="pill2 off">På pause</span>');
+        if(AVTALE&&p.rolle==='fotograf'){ var g=GODKJ.find(function(x){return x.profil_id===p.id&&x.versjon===AVTALE.versjon});
+          st+='<br><span class="tag" style="font-size:12px">'+(g?'Avtale godteken '+esc(shortDate(String(g.godkjent).slice(0,10))):(p.avtale_versjon?'Ventar på ny avtale':'Avtale ikkje godteken'))+'</span>'; }
         h+='<tr><td><b style="font-weight:600">'+esc(p.namn||'Utan namn')+(self?' <span class="hint">(deg)</span>':'')+'</b><br><span class="tag">'+esc([p.email,p.telefon,p.firma].filter(Boolean).join(' · '))+'</span></td>'+
           '<td>'+rol(p.rolle,'data-urolle="'+p.id+'"',self)+'</td><td>'+omr(p.omrade,'data-uomr="'+p.id+'"',false)+'</td><td><button class="pill2 '+(p.mva_registrert!==false?'on':'off')+'" data-uact="mva" data-id="'+p.id+'" type="button">'+(p.mva_registrert!==false?'Registrert':'Ikkje registrert')+'</button></td><td>'+st+'</td><td class="n">'+(cnt[p.id]||0)+'</td>'+
           '<td style="text-align:right;white-space:nowrap">'+((p.rolle!=='ingen'&&!self)?'<button class="btn ubtn" data-pv="'+p.id+'" style="margin-right:6px">Sjå som</button>':'')+(self?'':(p.rolle==='ingen'?'<button class="btn ubtn" data-uact="gi" data-id="'+p.id+'">Gi tilgang</button>':'<button class="btn ubtn" data-uact="'+(p.aktiv?'pause':'aktiver')+'" data-id="'+p.id+'">'+(p.aktiv?'Set på pause':'Aktiver')+'</button>'))+'</td></tr>';
@@ -1410,6 +1437,42 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   var FK=['namn','orgnr','epost','frist','adresse','merking','samle'];
   var fakDirty=false;
   function fillFak(force){ var f=document.activeElement; if(!force&&(fakDirty||(f&&f.id&&f.id.indexOf('fk-')===0))) return; FK.forEach(function(k){ $('fk-'+k).value=FAKTURA[k]||''; }); }
+  // ---- partnaravtale ----
+  // Partnarar må godta siste versjon før dei ser tavla (sjekka i databasen òg: ta_jobb krev avtale_ok()).
+  var AVTALE_UTKAST="## 1. Partane\nAvtalen er mellom Aroy Film (org.nr. 930 795 577), heretter «Aroy Film», og deg som partnar, heretter «partnaren». Partnaren godtek avtalen ved å krysse av og trykkje «Godta» på oppdragstavla. Tidspunkt og versjon blir lagra.\n\n## 2. Kva avtalen gjeld\nAvtalen er ein rammeavtale for foto- og filmoppdrag som Aroy Film tilbyr gjennom oppdragstavla (oppdrag.aroyfilm.no). Kvart oppdrag blir avtalt når partnaren tek eller får tildelt jobben på tavla. Partnaren har inga plikt til å ta oppdrag, og Aroy Film har inga plikt til å tilby oppdrag.\n\n## 3. Sjølvstendig næringsdrivande\nPartnaren er sjølvstendig næringsdrivande og ikkje tilsett i Aroy Film. Partnaren har sjølv ansvar for skatt, meirverdiavgift, forsikringar, pensjon og eige utstyr.\n\n## 4. Oppdrag og levering\n- Eit oppdrag er bindande når partnaren har teke det eller stadfesta datoen på tavla.\n- Partnaren møter til avtalt tid og stad og følgjer instruksane i oppdraget.\n- Kan partnaren likevel ikkje gjennomføre eit oppdrag, skal Aroy Film få beskjed så snart som mogleg, og seinast [24 timar] før.\n- Ferdig materiale blir levert gjennom tavla innan fristen i oppdraget. Står det ingen frist, gjeld [3 vyrkedagar] etter opptak.\n- Rettingar som kunden ber om innan rimelege rammer, inngår i honoraret ([éin rettingsrunde]).\n\n## 5. Honorar og faktura\n- Honoraret står på kvart oppdrag på tavla og er oppgitt eksklusive meirverdiavgift.\n- Partnaren fakturerer Aroy Film etter at leveransen er godkjend, etter fakturainformasjonen på tavla.\n- Betalingsfrist er [14 dagar].\n- Reise og utlegg blir berre dekte når det er avtalt på førehand.\n\n## 6. Opptreden hos kunden\nPartnaren representerer Aroy Film hos kunden og opptrer profesjonelt. Partnaren skal ikkje marknadsføre eiga verksemd, dele ut eigne visittkort eller gje eigne prisar til kunden under eit oppdrag for Aroy Film.\n\n## 7. Kundevern\nPartnaren skal ikkje sjølv, eller gjennom andre, ta oppdrag direkte frå kundar som partnaren har møtt gjennom Aroy Film. Dette gjeld i [12 månader] etter det siste oppdraget hos kunden, med mindre Aroy Film har samtykt skriftleg.\n\n## 8. Rettar til materialet\n- Alle opptak og alt ferdig materiale frå oppdrag for Aroy Film kan Aroy Film og kunden bruke fritt, utan avgrensing i tid, stad eller medium. Partnaren overdreg desse rettane når honoraret er betalt.\n- Partnaren kan bruke materialet i eigen portefølje når kunden har publisert det, så sant Aroy Film eller kunden ikkje har sagt nei. Partnaren skal ikkje nemne prisar eller kunde-interne opplysningar.\n- Partnaren har rett til å bli namngitt der det er vanleg, etter åndsverklova.\n\n## 9. Teieplikt og personvern\n- Partnaren har teieplikt om kundar, prisar, adresser og alt partnaren får vite gjennom oppdraga. Teieplikta gjeld òg etter at avtalen er slutt.\n- Opptak frå private heimar og av personar er personopplysningar. Partnaren behandlar dei berre for å gjennomføre oppdraget, lagrar dei trygt og slettar råmateriale [90 dagar] etter godkjend levering, eller tidlegare om Aroy Film ber om det.\n- Partnaren deler ikkje materiale med andre enn Aroy Film utan løyve.\n\n## 10. Ansvar og forsikring\n- Partnaren har sjølv risikoen for eige utstyr.\n- Partnaren er ansvarleg for skade han eller ho valdar på eigedom eller personar ved aktløyse, og bør ha ansvarsforsikring.\n- Ved bruk av drone har partnaren gyldig kompetansebevis og følgjer gjeldande reglar.\n\n## 11. Avlysing\nAvlyser Aroy Film eit oppdrag mindre enn [24 timar] før oppstart, får partnaren [50 %] av honoraret. Avlysing tidlegare enn dette gir ingen kompensasjon.\n\n## 12. Varigheit og oppseiing\nAvtalen gjeld til ein av partane seier han opp på tavla eller skriftleg. Oppseiinga gjeld straks, men oppdrag som allereie er tekne, skal fullførast. Punkta om teieplikt, kundevern og rettar gjeld vidare etter oppseiing.\n\n## 13. Endringar\nAroy Film kan endre avtalen. Ein ny versjon blir vist på tavla, og partnaren må godta han for å ta nye oppdrag.\n\n## 14. Lovval og tvistar\nAvtalen følgjer norsk rett. Tvistar skal først løysast ved forhandling, og elles ved [Oslo tingrett].";
+  function needAvtale(){ return !isOwner&&!PV&&!!AVTALE&&!!profile&&(profile.avtale_versjon||0)<AVTALE.versjon; }
+  function avtaleHtml(t){ var h='', ul=false;
+    String(t||'').split('\n').forEach(function(l){
+      if(/^-\s/.test(l)){ if(!ul){ h+='<ul>'; ul=true; } h+='<li>'+esc(l.slice(2))+'</li>'; return; }
+      if(ul){ h+='</ul>'; ul=false; }
+      if(/^#{1,3}\s/.test(l)) h+='<h3>'+esc(l.replace(/^#+\s*/,''))+'</h3>'; else if(l.trim()) h+='<p>'+esc(l)+'</p>'; });
+    return h+(ul?'</ul>':''); }
+  $('av-ok').addEventListener('change',function(){ $('av-godta').disabled=!this.checked; });
+  $('av-godta').addEventListener('click',async function(){
+    if(!$('av-ok').checked||!AVTALE) return; var b=this; b.disabled=true;
+    var r=await sb.rpc('godta_avtale',{p_versjon:AVTALE.versjon});
+    if(r.error||!r.data){ b.disabled=false; toast('Klarte ikkje lagre. Last sida på nytt og prøv igjen.'); return; }
+    profile.avtale_versjon=AVTALE.versjon; window.scrollTo(0,0); rebuild(); welcome(); toast('Takk! Kopi av avtalen er send på mail.');
+  });
+  var avtDirty=false;
+  function avtLock(on){ $('avt-tekst').readOnly=on; $('avtEdit').hidden=!on; $('avtPub').hidden=on; $('avtCancel').hidden=on; $('avtPub').textContent='Publiser ny versjon'; delete $('avtPub').dataset.armed; }
+  function fillAvt(force){ if(avtDirty&&!force) return;
+    var n=allProfiles.filter(function(p){return p.rolle==='fotograf'&&p.aktiv}).length, ok=AVTALE?allProfiles.filter(function(p){return p.rolle==='fotograf'&&p.aktiv&&(p.avtale_versjon||0)>=AVTALE.versjon}).length:0;
+    $('avtSub').textContent=AVTALE?'versjon '+AVTALE.versjon+' · '+ok+' av '+n+' har godteke':'ikkje publisert';
+    $('avtHint').textContent=AVTALE?'Publisert '+shortDate(String(AVTALE.laga).slice(0,10))+'. Partnarane må godta avtalen før dei ser tavla. Publiserer du ein ny versjon, må alle godta på nytt.':'Utkastet under er ikkje publisert. Fyll inn alt i [klammer], og få det gjerne lese av ein advokat. Når du publiserer, må alle partnarar godta avtalen neste gong dei loggar inn.';
+    $('avt-tekst').value=AVTALE?AVTALE.tekst:AVTALE_UTKAST; avtLock(true); }
+  $('avtEdit').addEventListener('click',function(){ avtLock(false); $('avt-tekst').focus(); });
+  $('avtCancel').addEventListener('click',function(){ avtDirty=false; fillAvt(true); });
+  $('avt-tekst').addEventListener('input',function(){ avtDirty=true; delete $('avtPub').dataset.armed; $('avtPub').textContent='Publiser ny versjon'; });
+  $('avtPub').addEventListener('click',async function(){
+    var t=$('avt-tekst').value.trim(), b=this;
+    if(/\[[^\]]+\]/.test(t)){ toast('Fyll inn alt som står i [klammer] først'); return; }
+    if(AVTALE&&t===AVTALE.tekst.trim()){ toast('Ingen endringar å publisere'); return; }
+    if(t.length<200){ toast('Avtalen er for kort'); return; }
+    if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen: alle partnarar må godta på nytt'; return; }
+    try{ await run(sb.from('avtale').insert({tekst:t})); avtDirty=false; toast('Ny versjon er publisert'); reload(); }catch(err){ toast(writeErr(err)); }
+  });
+
   // Fakturainfo er låst til Jacob trykkjer «Rediger», så han ikkje endrar noko ved eit uhell.
   function fakLock(on){ $('fakForm').classList.toggle('locked',on); FK.forEach(function(k){ $('fk-'+k).readOnly=on; }); $('fakEdit').hidden=!on; $('fakSave').hidden=on; $('fakCancel').hidden=on; }
   fakLock(true);
@@ -1471,7 +1534,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   // Første gong ein partnar er inne: kort forklaring, og kontaktinfo om ho manglar. Blir ikkje vist att.
   function welcome(){
     var key='aroy-velkomen-'+me, seen=false; try{ seen=!!localStorage.getItem(key); }catch(e){}
-    if(isOwner||PV||seen) return;
+    if(isOwner||PV||seen||needAvtale()) return;
     $('wTitle').textContent='Velkomen'+(profile.namn?', '+profile.namn.split(' ')[0]:'')+'!';
     var need=!profile.telefon; $('wForm').hidden=!need;
     if(need){ $('w-firma').value=profile.firma||''; $('w-orgnr').value=profile.orgnr||''; $('w-mva').checked=profile.mva_registrert!==false; }
@@ -1508,6 +1571,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       .on('postgres_changes',{event:'*',schema:'public',table:'avslag'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'kundar'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'kalender_forslag'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'avtale'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'avtale_godkjent'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'innstillingar'},reload).subscribe();
   }
   var C=window.AROY_CONFIG||{};

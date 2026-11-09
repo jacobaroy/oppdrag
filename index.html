@@ -582,7 +582,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 
   var sb=null, me=null, myEmail='', isOwner=false, profile=null;
   var rows=[], blocks=[], allProfiles=[], invites=[], photogs={}, capOff=0, mode='job', warnOK=false;
-  var PRIS={}, HON={}, AVSLAG=[], offers=[], MVA=0.25, OV='idag';
+  var PRIS={}, HON={}, AVSLAG=[], KALF=[], kalF=null, offers=[], MVA=0.25, OV='idag';
   try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
   var MEG='Aroy Film';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
   // Fakturainfo til partnarane. Standardverdiar; Jacob endrar dei under Brukarar (tabellen innstillingar).
@@ -634,7 +634,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   async function loadAll(){
     // Alle tabellane blir henta samtidig, ikkje éin etter éin.
     var q=[sb.from('oppdrag').select('*'), sb.from('opptatt').select('*'), sb.from('oppdrag_honorar').select('*'), sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle()];
-    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'));
+    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'));
     var r=await Promise.all(q), r1=r[0];
     if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
     rows=r1.data||[]; blocks=r[1].data||[];
@@ -645,6 +645,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       PRIS={}; (r[6].data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
       AVSLAG=r[7].data||[];
       KUNDAR={}; (r[8].data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
+      KALF=(r[9]&&r[9].data)||[];   // nye hendingar frå Google Kalender
       photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade}; });
     }
     msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); }
@@ -829,6 +830,9 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var reqs = isOwner ? allProfiles.filter(function(p){return p.rolle==='ingen'&&p.onskjer_tilgang}) : [];
     var rh = reqs.map(function(p){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>'+esc(p.namn||p.email)+' vil bli partnar</b><span>'+esc([p.omrade,p.telefon,p.firma,p.email].filter(Boolean).join(' · '))+'</span></div>'+
       '<div class="reqa"><button class="btn primary ubtn" type="button" data-uact="gi" data-id="'+esc(p.id)+'">Godkjenn</button><button class="btn ubtn" type="button" data-uact="avvis" data-id="'+esc(p.id)+'">Avvis</button></div></li>'; }).join('');
+    // Nye hendingar i Google Kalender («Aroy Film oppdrag») som ikkje er oppdrag enno.
+    rh += (isOwner?KALF:[]).map(function(f){ return '<li class="req"><i class="dot" style="--c:var(--s-booka)"></i><div class="tx"><b>Nytt i kalenderen: '+esc(f.tittel||'Utan tittel')+'</b><span>'+esc([f.dato?shortDate(f.dato)+(f.tid?' kl. '+f.tid:''):'',f.stad].filter(Boolean).join(' · '))+'</span></div>'+
+      '<div class="reqa"><button class="btn primary ubtn" type="button" data-kreg="'+esc(f.id)+'">Registrer</button><button class="btn ubtn" type="button" data-kign="'+esc(f.id)+'">Ignorer</button></div></li>'; }).join('');
     if(rh&&!list.length){ $('todo').innerHTML=rh; return; }
     var QB={levert:['godkjent','Godkjent'],godkjent:['fakturert','Fakturert']};
     $('todo').innerHTML = rh + (list.length ? list.map(function(x){var o=x.it.o, q=isOwner&&QB[o.status];return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"'+(q?' class="req"':'')+'><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div>'+
@@ -1136,7 +1140,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   }
   function dayRow(d){ return '<div class="two dayrow"><input type="date" class="d-dato" aria-label="Dato" value="'+esc(d.dato)+'"><div style="display:flex;gap:6px"><input type="time" class="d-tid" aria-label="Klokkeslett" value="'+esc(d.tid)+'" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface)"><button type="button" class="btn ghost icon" data-delrow aria-label="Fjern dag" style="height:auto">✕</button></div></div>'; }
   function openDrawer(key,preset){   // berre eigar. Partnaren får openJob/openDeliver.
-    editKey=key||null; mode='job'; warnOK=false; $('saveBtn').textContent='Lagre';
+    editKey=key||null; mode='job'; warnOK=false; $('saveBtn').textContent='Lagre'; kalF=(!key&&preset&&preset._kal)||null;
     var it=key?find(key):null;
     var o = it ? Object.assign({},it.o) : Object.assign({status:'booka',type:'Boligfilm',omrade:area!=='Alle'?area:''},preset||{});
     var k0=o.kategori||catOf(o.type)||'Eigedom'; draft={omrade:o.omrade||'', kat:k0, newType:false};
@@ -1237,7 +1241,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var priceIn=$('f-pris').value, honIn=sel==='_meg'?'':$('f-hon').value;
     try{
       var id=it?it.key:null;
-      if(it) await run(sb.from('oppdrag').update(row).eq('id',id)); else { var ins=await run(sb.from('oppdrag').insert(row).select('id').single()); id=ins.data.id; }
+      if(it) await run(sb.from('oppdrag').update(row).eq('id',id)); else { if(kalF) row.kalender_hending=kalF; var ins=await run(sb.from('oppdrag').insert(row).select('id').single()); id=ins.data.id;
+        if(kalF){ await sb.from('kalender_forslag').update({status:'registrert',oppdrag_id:id}).eq('id',kalF); KALF=KALF.filter(function(f){return f.id!==kalF}); } }
       if(priceIn!==''||hasNum(PRIS[id])) await run(sb.from('oppdrag_pris').upsert({oppdrag_id:id,kundepris:+priceIn||0}));
       if(honIn!==''||hasNum(HON[id])) await run(sb.from('oppdrag_honorar').upsert({oppdrag_id:id,belop:+honIn||0}));
       if(row.utlyst&&it&&!it.o.utlyst) await sb.from('avslag').delete().eq('oppdrag_id',id);
@@ -1286,6 +1291,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if((b=t.closest('[data-logout]'))){ sb.auth.signOut().then(function(){ location.reload(); }); return; }
     if((b=t.closest('[data-ov]'))){ OV=b.getAttribute('data-ov'); kpiAnim=true; try{localStorage.setItem('aroy-side',OV)}catch(err){} kpi=null; openK=null; newK=false; render(); if(OV==='brukarar') renderUsers(); window.scrollTo(0,0); return; }
     if((b=t.closest('[data-uact]'))){ userAction(b); return; }
+    if((b=t.closest('[data-kreg]'))){ var kf=KALF.find(function(f){return f.id===b.getAttribute('data-kreg')}); if(kf) openDrawer(null,{adresse:kf.tittel,dagar:kf.dato?[{dato:kf.dato,tid:kf.tid||''}]:[],notat:[kf.stad,kf.notat].filter(Boolean).join('\n'),_kal:kf.id}); return; }
+    if((b=t.closest('[data-kign]'))){ kalIgnorer(b); return; }
     if((b=t.closest('[data-quick]'))){ quick(b); return; }
     if((b=t.closest('[data-dok]'))){ if(!b.disabled) datoSvar(b,true); return; }
     if((b=t.closest('[data-dnei]'))){ if(!b.disabled) datoSvar(b,false); return; }
@@ -1368,6 +1375,10 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
         toast(act==='pause'?'Sett på pause':act==='gi'?(p.namn||'Partnaren')+' har fått tilgang':act==='avvis'?'Avvist':'Lagra'); }
       reload();
     }catch(err){ toast(writeErr(err)); }
+  }
+  async function kalIgnorer(b){
+    var id=b.getAttribute('data-kign'), li=b.closest('li'); if(li) li.classList.add('gone');
+    try{ await run(sb.from('kalender_forslag').update({status:'ignorert'}).eq('id',id)); KALF=KALF.filter(function(f){return f.id!==id}); toast('Ignorert'); reload(); }catch(err){ toast(writeErr(err)); reload(); }
   }
   // Hurtigknapp i «Treng deg»: flytt jobben eitt steg vidare utan å opne skuffa.
   async function quick(b){
@@ -1476,6 +1487,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       .on('postgres_changes',{event:'*',schema:'public',table:'oppdrag_honorar'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'avslag'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'kundar'},reload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'kalender_forslag'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'innstillingar'},reload).subscribe();
   }
   var C=window.AROY_CONFIG||{};

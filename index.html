@@ -32,17 +32,22 @@ button,input,select,textarea{font:inherit;color:inherit}
 .seg{display:inline-flex;background:var(--hover);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:#fff;color:#000}
-.btn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+/* Knappar: kvit = hovudval, kant = alternativ, raud tekst = fare. Lik høgd og vanleg skrift overalt. */
+.btn{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;min-height:40px;padding:0 18px;font:inherit;font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;text-decoration:none;transition:background .15s,opacity .15s,border-color .15s}
+a.btn{color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .btn:hover{background:var(--hover)}
-.btn.primary{background:#fff;color:#000;border-color:#fff;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px}
+.btn.primary{background:#fff;color:#000;border-color:#fff;font-weight:700}
 .btn.primary:hover{opacity:.88;background:#fff}
 .btn.ghost{border-color:transparent;background:transparent}
-.btn.danger{color:var(--s-retting)}
-.icon{width:30px;height:30px;padding:0;justify-content:center}
+.btn.danger{color:var(--s-retting);border-color:color-mix(in srgb,var(--s-retting) 45%,transparent)}
+.btn.danger:hover{background:color-mix(in srgb,var(--s-retting) 12%,transparent)}
+.icon{width:34px;height:34px;min-height:0;padding:0;justify-content:center}
 
 @media (max-width:640px){.bar-in{gap:10px}.bar #areas{order:3;width:100%;display:flex}.bar #areas button{flex:1}
   .bar #nav{order:2;width:100%;display:flex;overflow-x:auto;scrollbar-width:none}.bar #nav::-webkit-scrollbar{display:none}.bar #nav button{flex:1;padding:8px 10px}
-  .icon{width:40px;height:40px}.chipbtn{padding:8px 12px}.ubtn{padding:8px 12px}.statsel{padding:8px 28px 8px 22px}
+  #listPanel .ph{flex-wrap:wrap}#listPanel .ph h2{white-space:nowrap}
+  .btn{min-height:44px}.ubtn{min-height:40px;padding:0 14px}.icon{width:40px;height:40px;min-height:0}.chipbtn{padding:8px 12px}.who{display:none}.statsel{padding:8px 28px 8px 22px}
   .fld input,.fld select,.fld textarea,.ksearch{font-size:16px}   /* under 16px zoomar iPhone inn på feltet */
   .cap td.capday{width:70px;white-space:nowrap}.cap .capc{max-width:none}}
 .wrap{max-width:1180px;margin:0 auto;padding-block:24px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
@@ -265,11 +270,19 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 .users td{vertical-align:middle}
 .users select{border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--surface);font-size:13px}
 .users select:disabled{opacity:.5}
+.boot{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:14px;padding:120px 20px}.boot[hidden]{display:none}
+.spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.chev2{margin-left:auto;padding-left:10px;color:var(--faint);font-size:22px;line-height:1;align-self:center}
+.fbox{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}.fbox>b{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tgl{display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:4px 0}
+.tgl i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.tgl i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.tgl.on{color:var(--ink)}.tgl.on i{background:var(--s-fakturert)}.tgl.on i:after{transform:translateX(14px)}
 .pill2{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;border:1px solid var(--line);white-space:nowrap}
 .pill2.on{color:var(--s-fakturert);border-color:var(--s-fakturert)}
 .pill2.off{color:var(--faint)}
 .pill2.wait{color:var(--s-levert);border-color:var(--s-levert)}
-.ubtn{font-size:12px;padding:5px 10px}
+.ubtn{font-size:13px;min-height:34px;padding:0 14px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip2{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .chip2:hover{color:var(--ink);border-color:var(--muted)}
@@ -356,6 +369,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   <button class="btn primary" id="newBtn" type="button" hidden>+ Nytt oppdrag</button>
 </div></header>
 
+<div class="boot" id="boot" aria-live="polite"><span class="spin" aria-hidden="true"></span>Lastar tavla …</div>
+
 <section class="panel onb" id="login" hidden>
   <h1>Logg inn</h1>
   <p id="l-intro">Skriv inn e-posten din, så får du ein kode på mail. Du treng ikkje passord.</p>
@@ -409,7 +424,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   <div class="pvbar" id="pvBar" hidden><span>Førehandsvising: slik ser <b id="pvName"></b> tavla. Du kan ikkje endre noko her.</span><button class="btn primary" type="button" data-pvexit>Tilbake til admin</button></div>
   <p class="err" id="msg" hidden></p>
   <section class="panel" id="offerPanel" hidden>
-    <div class="ph"><h2>Nye oppdrag<span class="sub" id="offerCount"></span></h2></div>
+    <div class="ph"><h2><span id="offerTitle">Nye oppdrag</span><span class="sub" id="offerCount"></span></h2></div>
     <div id="offers" class="offers"></div>
   </section>
   <section class="panel welcome" id="welcomePanel" hidden>
@@ -478,7 +493,11 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 
 <main class="wrap" id="admin" hidden>
   <section class="panel">
-    <div class="ph"><h2>Inviter brukar</h2></div>
+    <div class="ph"><h2>Brukarar<span class="sub" id="ucount"></span></h2></div>
+    <div style="overflow-x:auto"><table class="month users" id="usersTbl"></table></div>
+  </section>
+  <details class="panel fold" id="invPanel">
+    <summary class="ph"><h2>Inviter ny brukar</h2><span class="chev" aria-hidden="true"></span></summary>
     <form id="invForm" class="invform">
       <label class="fld"><span>E-post</span><input id="i-email" type="email" required placeholder="namn@domene.no" autocomplete="off"></label>
       <label class="fld"><span>Namn</span><input id="i-namn" required placeholder="Ola Nordmann" autocomplete="off"></label>
@@ -487,11 +506,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       <button class="btn primary" type="submit" style="align-self:end;justify-content:center">Inviter</button>
     </form>
     <p class="hint" style="padding:0 16px 16px;margin:0">Send personen lenka til denne sida. Dei loggar inn med e-posten over og får ein kode på mail. Rolla og området du set her, gjeld med ein gong.</p>
-  </section>
-  <section class="panel">
-    <div class="ph"><h2>Brukarar<span class="sub" id="ucount"></span></h2></div>
-    <div style="overflow-x:auto"><table class="month users" id="usersTbl"></table></div>
-  </section>
+  </details>
   <details class="panel fold" id="fakPanel">
     <summary class="ph"><h2>Fakturainfo til partnarane</h2><span class="chev" aria-hidden="true"></span></summary>
     <form id="fakForm" class="locked" style="padding:16px;display:flex;flex-direction:column;gap:12px">
@@ -863,7 +878,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(rh&&!list.length){ $('todo').innerHTML=rh; return; }
     var QB={levert:['godkjent','Godkjent'],godkjent:['fakturert','Fakturert']};
     $('todo').innerHTML = rh + (list.length ? list.map(function(x){var o=x.it.o, q=isOwner&&QB[o.status];return '<li '+(!isOwner&&/Lever|Retting/.test(x.why)?'data-lever':'data-open')+'="'+esc(x.it.key)+'"'+(q?' class="req"':'')+'><i class="dot" style="--c:'+sc(o.status)+'"></i><div class="tx"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc(x.why)+(o.kunde?' · '+esc(o.kunde):'')+'</span></div>'+
-      (q?'<div class="reqa">'+(o.lenke&&o.status==='levert'&&/^https?:\/\//.test(o.lenke)?'<a class="btn ubtn" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Sjå video</a>':'')+'<button class="btn primary ubtn" type="button" data-quick="'+esc(x.it.key)+'" data-to="'+q[0]+'">'+q[1]+'</button></div>':'')+'</li>'}).join('')
+      (q?'<div class="reqa">'+(o.lenke&&o.status==='levert'&&/^https?:\/\//.test(o.lenke)?'<a class="btn ubtn" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Sjå video</a>':'')+'<button class="btn primary ubtn" type="button" data-quick="'+esc(x.it.key)+'" data-to="'+q[0]+'">'+q[1]+'</button></div>':'<span class="chev2" aria-hidden="true">›</span>')+'</li>'}).join('')
       : '<li class="empty" style="cursor:default">'+(isOwner?'Ingenting ventar på deg.':'Alt er levert. Godt jobba.')+'</li>');
   }
 
@@ -914,6 +929,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(isOwner||(!offers.length&&!dq.length)){ pnl.hidden=true; return; }
     pnl.hidden=false;
     $('offerCount').textContent=String(offers.length+dq.length);
+    $('offerTitle').textContent=dq.length?'Treng svar':'Nye oppdrag';
     // Ny dato på ein jobb partnaren alt har: han svarar om det passar.
     var dh=dq.map(function(it){ var o=it.o, dg=days(o), c=conflicts(dg.map(function(d){return d.dato}),me,'',it.key);
       return '<div class="offer"><div class="offer-h"><div><b>Ny dato: '+esc(o.adresse||'Oppdrag')+'</b><span>'+esc([o.kunde,o.type,o.omrade].filter(Boolean).join(' · '))+'</span></div></div>'+
@@ -976,7 +992,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       var third = isOwner ? esc(o.fotograf||'–')+'<span class="sub2">'+esc(o.omrade||'')+'</span>' : esc(o.type||'–')+'<span class="sub2">'+esc(hasNum(o.honorar)?kr(o.honorar)+(myMva()?' + mva':''):'')+'</span>';
       var fifth = isOwner
         ? (s==='fakturert'?'<span class="inv ok">✓ Fakturert</span>':(s==='godkjent'?'<span class="inv due">Klar til faktura</span>':'<span class="inv">Ikkje enno</span>'))+(hasNum(o.pris)?'<span class="sub2">'+kr(o.pris)+(hasNum(o.honorar)?' · forteneste '+kr(o.pris-(+o.honorar||0)):'')+'</span>':'')
-        : (WORK.indexOf(s)>=0?'<button type="button" class="btn lever" data-lever="'+esc(it.key)+'">Lever video</button>':(o.lenke?'Levert':'–'));
+        : ((s==='retting'||(s==='booka'&&(shot(o)||onDay(o,TODAY))))?'<button type="button" class="btn lever" data-lever="'+esc(it.key)+'">Lever video</button>':(o.lenke?'Levert':'–'));
       h+='<tr class="job" data-open="'+esc(it.key)+'">'+
         '<td class="c-date num">'+esc(fmtDays(o))+'</td>'+
         '<td class="c-addr addr"><b>'+esc(o.adresse||'Utan tittel')+'</b><span>'+esc([o.kunde,isOwner?o.type:''].filter(Boolean).join(' · '))+'</span></td>'+
@@ -1187,9 +1203,9 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       '<option value="_annan"'+(cur==='_annan'?' selected':'')+'>Annan (skriv namn)</option></select></label>'+
       '<label class="chk2" id="f-utlys-w"'+(uids.indexOf(cur)>=0?'':' hidden')+'><input type="checkbox" id="f-utlys"'+(ask?' checked':'')+'> <span>Spør fotografen først. Jobben blir hans når han trykkjer «Ta jobben».</span></label>'+
       '<label class="fld" id="f-fotofri-w"'+(cur==='_annan'?'':' hidden')+'><span>Namn</span><input id="f-fotograf" value="'+esc(cur==='_annan'?(o.fotograf||''):'')+'" placeholder="Namn på fotograf"></label>'+
-      '<div class="two"><label class="fld"><span>Kundepris eks. mva</span><input type="number" min="0" step="100" inputmode="numeric" id="f-pris" value="'+esc(hasNum(o.pris)?o.pris:'')+'" placeholder="0"></label>'+
+      '<div class="fbox"><b>Pris</b><div class="two"><label class="fld"><span>Kundepris eks. mva</span><input type="number" min="0" step="100" inputmode="numeric" id="f-pris" value="'+esc(hasNum(o.pris)?o.pris:'')+'" placeholder="0"></label>'+
       '<label class="fld" id="f-hon-w"'+(cur==='_meg'?' hidden':'')+'><span>Honorar til fotograf eks. mva</span><input type="number" min="0" step="100" inputmode="numeric" id="f-hon" value="'+esc(hasNum(o.honorar)?o.honorar:'')+'" placeholder="0"></label></div>'+
-      '<div class="hint" id="f-sum"></div>';
+      '<div class="hint" id="f-sum"></div></div>';
     var st=STATUSES.slice(); if(!st.some(function(x){return x.k===o.status})&&SL[o.status]) st=st.concat([SL[o.status]]);
     $('dbody').innerHTML=
       '<label class="fld big"><span>Tittel</span><input id="f-adresse" required placeholder="Tittel på oppdrag" value="'+esc(o.adresse)+'" autocomplete="off"></label>'+
@@ -1199,8 +1215,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       '<div class="fld"><span>Opptaksdagar</span><div id="f-days" style="display:flex;flex-direction:column;gap:8px">'+(days(o).length?days(o):[{dato:'',tid:''}]).map(dayRow).join('')+'</div><div><button type="button" class="btn" data-addrow>+ Legg til dag</button></div></div>'+
       fotoField+
       '<div class="warn" id="f-warn" hidden></div>'+
-      '<label class="fld"><span>Status</span><select id="f-status">'+st.map(function(s){return '<option value="'+s.k+'"'+(s.k===o.status?' selected':'')+'>'+s.l+'</option>'}).join('')+'</select></label>'+
-      '<label class="fld"><span>Lenke til video (Frame.io)</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>'+
+      (it?'<label class="fld"><span>Status</span><select id="f-status">'+st.map(function(s){return '<option value="'+s.k+'"'+(s.k===o.status?' selected':'')+'>'+s.l+'</option>'}).join('')+'</select></label>'+
+      '<label class="fld"><span>Lenke til video (Frame.io)</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>':'')+   // nye oppdrag: status og lenke kjem seinare
       (o.lenke&&/^https?:\/\//.test(o.lenke)?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
       '<label class="fld"><span>Notat <span class="hint">fotografen ser dette, ikkje skriv pris her</span></span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>';
     $('delBtn').hidden=!it||PV; $('saveBtn').hidden=!!PV; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed;
@@ -1256,7 +1272,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var it=editKey?find(editKey):null;
     var dg=[].map.call(document.querySelectorAll('#f-days .dayrow'),function(r){return {dato:r.querySelector('.d-dato').value,tid:r.querySelector('.d-tid').value}}).filter(function(x){return x.dato}).sort(function(a,b){return (a.dato+a.tid).localeCompare(b.dato+b.tid)});
     var nt=$('f-newtype'); if(nt&&nt.value.trim()){ draft.kat=nt.value.trim(); }
-    var row={tittel:g('adresse'),kunde:g('kunde'),kategori:draft.kat||'',dagar:dg,dato:dg.length?dg[0].dato:null,status:g('status'),lenke:g('lenke'),notat:g('notat'),oppdatert:new Date().toISOString(),oppdatert_av:me};
+    var row={tittel:g('adresse'),kunde:g('kunde'),kategori:draft.kat||'',dagar:dg,dato:dg.length?dg[0].dato:null,status:g('status')||'booka',lenke:g('lenke'),notat:g('notat'),oppdatert:new Date().toISOString(),oppdatert_av:me};
     if(!row.tittel){ $('f-adresse').focus(); return; }
     row.retting = row.status==='retting'; if(row.retting) row.status='levert';
     var sel=$('f-foto').value, uid=sel.charAt(0)==='_'?'':sel, utl=sel==='_utlys'||(!!uid&&$('f-utlys').checked);
@@ -1376,8 +1392,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
         if(AVTALE&&p.rolle==='fotograf'){ var g=GODKJ.find(function(x){return x.profil_id===p.id&&x.versjon===AVTALE.versjon});
           st+='<br><span class="tag" style="font-size:12px">'+(g?'Avtale godteken '+esc(shortDate(String(g.godkjent).slice(0,10))):(p.avtale_versjon?'Ventar på ny avtale':'Avtale ikkje godteken'))+'</span>'; }
         h+='<tr><td><b style="font-weight:600">'+esc(p.namn||'Utan namn')+(self?' <span class="hint">(deg)</span>':'')+'</b><br><span class="tag">'+esc([p.email,p.telefon,p.firma].filter(Boolean).join(' · '))+'</span></td>'+
-          '<td>'+rol(p.rolle,'data-urolle="'+p.id+'"',self)+'</td><td>'+omr(p.omrade,'data-uomr="'+p.id+'"',false)+'</td><td><button class="pill2 '+(p.mva_registrert!==false?'on':'off')+'" data-uact="mva" data-id="'+p.id+'" type="button">'+(p.mva_registrert!==false?'Registrert':'Ikkje registrert')+'</button></td><td>'+st+'</td><td class="n">'+(cnt[p.id]||0)+'</td>'+
-          '<td style="text-align:right;white-space:nowrap">'+((p.rolle!=='ingen'&&!self)?'<button class="btn ubtn" data-pv="'+p.id+'" style="margin-right:6px">Sjå som</button>':'')+(self?'':(p.rolle==='ingen'?'<button class="btn ubtn" data-uact="gi" data-id="'+p.id+'">Gi tilgang</button>':'<button class="btn ubtn" data-uact="'+(p.aktiv?'pause':'aktiver')+'" data-id="'+p.id+'">'+(p.aktiv?'Set på pause':'Aktiver')+'</button>'))+'</td></tr>';
+          '<td>'+rol(p.rolle,'data-urolle="'+p.id+'"',self)+'</td><td>'+omr(p.omrade,'data-uomr="'+p.id+'"',false)+'</td><td><button class="tgl'+(p.mva_registrert!==false?' on':'')+'" data-uact="mva" data-id="'+p.id+'" type="button" role="switch" aria-checked="'+(p.mva_registrert!==false)+'" title="Trykk for å endre"><i></i>'+(p.mva_registrert!==false?'Ja':'Nei')+'</button></td><td>'+st+'</td><td class="n">'+(cnt[p.id]||0)+'</td>'+
+          '<td style="text-align:right;white-space:nowrap">'+((p.rolle!=='ingen'&&!self)?'<button class="btn ubtn" data-pv="'+p.id+'" style="margin-right:6px">Sjå som</button>':'')+(self?'':(p.rolle==='ingen'?'<button class="btn ubtn" data-uact="gi" data-id="'+p.id+'">Gi tilgang</button>':'<button class="btn ubtn'+(p.aktiv?' danger':'')+'" data-uact="'+(p.aktiv?'pause':'aktiver')+'" data-id="'+p.id+'">'+(p.aktiv?'Set på pause':'Aktiver')+'</button>'))+'</td></tr>';
       } else { var i=x.inv;
         h+='<tr><td><b style="font-weight:600">'+esc(i.namn||'')+'</b><br><span class="tag">'+esc(i.email)+'</span></td><td class="tag">'+(i.rolle==='admin'?'Admin':'Fotograf')+'</td><td class="tag">'+esc(i.omrade||'Inga')+'</td><td class="tag">–</td>'+
           '<td><span class="pill2 wait">Ikkje logga inn enno</span></td><td class="n">0</td><td style="text-align:right"><button class="btn ubtn danger" data-uact="avinviter" data-email="'+esc(i.email)+'">Fjern</button></td></tr>';
@@ -1497,7 +1513,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   });
 
   // ---- oppstart ----
-  function fatal(t){ $('fatal').textContent=t; $('fatal').hidden=false; $('main').hidden=true; }
+  function fatal(t){ $('fatal').textContent=t; $('fatal').hidden=false; $('main').hidden=true; $('boot').hidden=true; }
   // Innlogging med kode på e-post. iPhone fyller inn koden frå Mail av seg sjølv (one-time-code).
   function lmsg(t){ $('l-msg').textContent=t||''; $('l-msg').hidden=!t; }
   $('loginForm').addEventListener('submit',async function(e){
@@ -1556,9 +1572,9 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     me=session.user.id; myEmail=session.user.email;
     var pr=await sb.from('profiles').select('*').eq('id',me).maybeSingle();
     profile=pr.data;
-    $('login').hidden=true;
+    $('login').hidden=true; $('boot').hidden=false;
     if(!profile||profile.rolle==='ingen'||!profile.aktiv){
-      $('noaccess').hidden=false;
+      $('noaccess').hidden=false; $('boot').hidden=true;
       if(profile&&profile.rolle==='ingen'){ askAccess(); return; }
       $('na-text').textContent = profile&&!profile.aktiv ? 'Tilgangen din er sett på pause. Ta kontakt med oss på hei@aroyfilm.no.' : 'Du er logga inn som '+myEmail+', men har ikkje fått tilgang enno. Ta kontakt med Aroy Film på hei@aroyfilm.no.';
       return;
@@ -1567,6 +1583,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if(['idag','oversikt','kundar','brukarar'].indexOf(OV)<0) OV='idag';
     $('footWho').textContent=myEmail; $('foot').hidden=false;
     await loadAll();
+    $('boot').hidden=true;
     welcome();
     sb.channel('tavle').on('postgres_changes',{event:'*',schema:'public',table:'oppdrag'},reload)
       .on('postgres_changes',{event:'*',schema:'public',table:'opptatt'},reload)
@@ -1583,7 +1600,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   var C=window.AROY_CONFIG||{};
   if(!window.supabase||!C.url||!C.key){ fatal('Oppsettet manglar. Fyll inn config.js.'); return; }
   sb=window.supabase.createClient(C.url,C.key);
-  sb.auth.getSession().then(function(r){ var ses=r.data&&r.data.session; if(ses) start(ses); else $('login').hidden=false; });
+  sb.auth.getSession().then(function(r){ var ses=r.data&&r.data.session; if(ses) start(ses); else { $('boot').hidden=true; $('login').hidden=false; } });
   sb.auth.onAuthStateChange(function(ev,ses){ if(ev==='SIGNED_IN'&&ses&&!me){ start(ses); } });
 })();
 </script>

@@ -666,10 +666,12 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   }
   function by(k){ return view.filter(function(it){return it.o.status===k}); }
   function find(key){ return items.find(function(it){return it.key===key}); }
+  var BRIEF={};   // pre-prod: brief per oppdrag-id (berre eigar)
+  var PPF=[['mal','Mål med filmen'],['malgruppe','Målgruppe'],['bodskap','Bodskap og idé'],['tone','Tone og stil'],['leveransar','Leveransar (format, lengd)'],['notat','Notat']];
   async function loadAll(){
     // Alle tabellane blir henta samtidig, ikkje éin etter éin.
     var q=[sb.from('oppdrag').select('*'), sb.from('opptatt').select('*'), sb.from('oppdrag_honorar').select('*'), sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle()];
-    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'), sb.from('avtale_godkjent').select('*').order('godkjent',{ascending:false}));
+    if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'), sb.from('avtale_godkjent').select('*').order('godkjent',{ascending:false}), sb.from('preprod_brief').select('*'));
     q.push(sb.from('avtale').select('*').order('versjon',{ascending:false}).limit(1).maybeSingle());   // siste partnaravtale
     var r=await Promise.all(q), r1=r[0];
     if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
@@ -684,6 +686,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       KUNDAR={}; (r[8].data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
       KALF=(r[9]&&r[9].data)||[];   // nye hendingar frå Google Kalender
       GODKJ=(r[10]&&r[10].data)||[];
+      BRIEF={}; ((r[11]&&r[11].data)||[]).forEach(function(x){ BRIEF[x.oppdrag_id]=x; });
       photogs={}; allProfiles.forEach(function(p){ if(p.aktiv&&p.rolle!=='ingen'&&p.id!==me) photogs[p.id]={namn:p.namn||p.email,omrade:p.omrade}; });
     }
     msg(''); rebuild(); if(isOwner){ renderUsers(); fillFak(); fillAvt(); }
@@ -1218,11 +1221,23 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       (it?'<label class="fld"><span>Status</span><select id="f-status">'+st.map(function(s){return '<option value="'+s.k+'"'+(s.k===o.status?' selected':'')+'>'+s.l+'</option>'}).join('')+'</select></label>'+
       '<label class="fld"><span>Lenke til video (Frame.io)</span><input type="url" id="f-lenke" placeholder="https://" value="'+esc(o.lenke)+'"></label>':'')+   // nye oppdrag: status og lenke kjem seinare
       (o.lenke&&/^https?:\/\//.test(o.lenke)?'<a class="tag" href="'+esc(o.lenke)+'" target="_blank" rel="noopener">Opne video ↗</a>':'')+
-      '<label class="fld"><span>Notat <span class="hint">fotografen ser dette, ikkje skriv pris her</span></span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>';
+      '<label class="fld"><span>Notat <span class="hint">fotografen ser dette, ikkje skriv pris her</span></span><textarea id="f-notat">'+esc(o.notat)+'</textarea></label>'+
+      (it?ppHTML(it.key):'');
     $('delBtn').hidden=!it||PV; $('saveBtn').hidden=!!PV; $('delBtn').textContent='Slett'; delete $('delBtn').dataset.armed;
     setTimeout(function(){ checkConflict(); priceSum(); },0);
     showIn($('scrim')); showIn($('drawer'));
     setTimeout(function(){ if(!it) $('f-adresse').focus(); },30);
+  }
+  function ppHTML(id){ var b=BRIEF[id]||{};
+    return '<details class="fbox" id="pp"'+(Object.keys(b).length?' open':'')+'><summary><b>Pre-prod: brief</b> <span class="hint">berre du ser dette</span></summary>'+
+      PPF.map(function(f){ return '<label class="fld"><span>'+f[1]+'</span><textarea id="pp-'+f[0]+'" rows="2">'+esc(b[f[0]]||'')+'</textarea></label>'; }).join('')+
+      '<div><button type="button" class="btn" id="pp-copy">Fyll frå førre oppdrag til same kunde</button></div></details>'; }
+  function ppFromPrev(){
+    var cur=find(editKey); if(!cur||!cur.o.kunde) return toast('Set kunde først');
+    var prev=items.filter(function(x){return x.key!==editKey&&x.o.kunde===cur.o.kunde&&BRIEF[x.key]}).sort(function(a,b){return String(b.o.dato||'').localeCompare(String(a.o.dato||''))})[0];
+    if(!prev) return toast('Fann ingen brief frå før for denne kunden');
+    PPF.forEach(function(f){ var e=$('pp-'+f[0]); if(e&&!e.value.trim()) e.value=BRIEF[prev.key][f[0]]||''; });
+    toast('Fylt frå «'+(prev.o.adresse||'førre oppdrag')+'». Tomme felt er fylt, rett det som ikkje passar.');
   }
   function priceSum(){ var e=$('f-sum'); if(!e) return; var p=$('f-pris').value, h=$('f-hon').value; var t=[];
     if(p!=='') t.push('Kunde betaler '+kr(inkl(p))+' inkl. mva');
@@ -1289,9 +1304,12 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       if(priceIn!==''||hasNum(PRIS[id])) await run(sb.from('oppdrag_pris').upsert({oppdrag_id:id,kundepris:+priceIn||0}));
       if(honIn!==''||hasNum(HON[id])) await run(sb.from('oppdrag_honorar').upsert({oppdrag_id:id,belop:+honIn||0}));
       if(row.utlyst&&it&&!it.o.utlyst) await sb.from('avslag').delete().eq('oppdrag_id',id);
+      if($('pp')){ var pb={oppdrag_id:id,oppdatert:new Date().toISOString()}, any=false; PPF.forEach(function(x){ var v=$('pp-'+x[0]).value.trim(); pb[x[0]]=v; if(v||(BRIEF[id]&&BRIEF[id][x[0]])) any=true; });
+        if(any) await run(sb.from('preprod_brief').upsert(pb)); }
       closeDrawer(); toast(!dg.length&&(row.fotograf_id||row.utlyst)?'Lagra. Partnaren får beskjed når du set datoen.':(it&&it.uid&&JSON.stringify(dg)!==JSON.stringify(days(it.o))&&dg.length?'Lagra. Partnaren blir spurd om den nye datoen passar.':(it?'Lagra':'Oppdraget er lagt til'))); reload();
     }catch(err){ toast(writeErr(err)); }
   });
+  $('dbody').addEventListener('click',function(e){ if(e.target.id==='pp-copy') ppFromPrev(); });
   $('delBtn').addEventListener('click',async function(){
     var b=$('delBtn');
     if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='Trykk igjen for å slette'; return; }
@@ -1371,7 +1389,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var it=find(key); if(!it) return;
     e.target.style.setProperty('--c',sc(e.target.value));
     var nv=e.target.value, patch={status:nv==='retting'?'levert':nv,retting:nv==='retting',oppdatert:new Date().toISOString(),oppdatert_av:me};
-    try{ await run(sb.from('oppdrag').update(patch).eq('id',key)); toast('Status: '+SL[nv].l); reload(); }
+    try{ await run(sb.from('oppdrag').update(patch).eq('id',key)); toast(nv==='godkjent'?'Godkjent. Utkast til kunden ligg i Gmail om ca. eitt minutt.':'Status: '+SL[nv].l); reload(); }
     catch(err){ toast(writeErr(err)); }
   });
 
@@ -1447,7 +1465,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   // Hurtigknapp i «Treng deg»: flytt jobben eitt steg vidare utan å opne skuffa.
   async function quick(b){
     var key=b.getAttribute('data-quick'), to=b.getAttribute('data-to'), li=b.closest('li'); if(li) li.classList.add('gone');
-    try{ await run(sb.from('oppdrag').update({status:to,retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',key)); toast('Status: '+SL[to].l); reload(); }
+    try{ await run(sb.from('oppdrag').update({status:to,retting:false,oppdatert:new Date().toISOString(),oppdatert_av:me}).eq('id',key)); toast(to==='godkjent'?'Godkjent. Utkast til kunden ligg i Gmail om ca. eitt minutt.':'Status: '+SL[to].l); reload(); }
     catch(err){ if(li) li.classList.remove('gone'); toast(writeErr(err)); }
   }
   // ---- fakturainfo (eigar) ----

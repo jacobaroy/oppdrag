@@ -1254,7 +1254,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   function shotHTML(id){ var a=SHOT[id]||[];
     return '<details class="fbox" id="pp-shots"'+(a.length?' open':'')+'><summary><b>Pre-prod: shotliste</b> <span class="hint" id="pp-sum"></span></summary>'+
       '<div id="pp-rows">'+a.map(shotRow).join('')+'</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" data-sadd>+ Legg til shot</button><button type="button" class="btn" id="pp-shotcopy">Kopier shots frå førre oppdrag</button><button type="button" class="btn" data-sprint>Skriv ut / PDF</button><button type="button" class="btn" data-scsv>Last ned CSV</button></div></details>'; }
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" data-sadd>+ Legg til shot</button><button type="button" class="btn" id="pp-shotcopy">Kopier shots frå førre oppdrag</button><button type="button" class="btn" data-sprint>Opptaksplan (PDF)</button><button type="button" class="btn" data-scsv>Last ned CSV</button></div></details>'; }
   function shotRead(){ return [].map.call(document.querySelectorAll('#pp-rows .ppshot'),function(r){ var q=function(c){return r.querySelector(c).value.trim()};
     return {id:r.dataset.id||'',scene:q('.s-scene'),skildring:q('.s-skild'),storleik:q('.s-storleik'),rorsle:q('.s-rorsle'),objektiv:q('.s-objektiv'),lengd_sek:q('.s-lengd')===''?null:+q('.s-lengd'),ferdig:r.querySelector('.s-ferdig').checked}; }); }
   function shotDraw(a){ $('pp-rows').innerHTML=a.map(shotRow).join(''); shotSum(); }
@@ -1268,9 +1268,10 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var b=PPF.map(function(f){ var e=$('pp-'+f[0]); return e&&e.value.trim()?'<p><b>'+esc(f[1])+':</b> '+esc(e.value.trim()).replace(/\n/g,'<br>')+'</p>':''; }).join('');
     var last=null, body=a.map(function(x,i){ var h=x.scene!==last?'<tr><th colspan="6">'+esc(x.scene||'Utan scene')+'</th></tr>':''; last=x.scene;
       return h+'<tr><td>'+(i+1)+'</td><td>'+esc(x.skildring)+'</td><td>'+esc(x.storleik)+'</td><td>'+esc(x.rorsle)+'</td><td>'+esc(x.objektiv)+'</td><td>'+(x.lengd_sek==null?'':x.lengd_sek+' s')+'</td></tr>'; }).join('');
-    var d=days(o).map(function(x){return x.dato+(x.tid?' kl. '+x.tid:'')}).join(', ');
+    var d=days(o).map(function(x){return x.dato+(x.tid?' kl. '+x.tid:'')}).join(', '), nt=$('f-notat')?$('f-notat').value.trim():'';
+    var pr='<p><b>Stad:</b> '+esc(o.adresse||'')+(o.omrade?' ('+esc(o.omrade)+')':'')+'</p>'+(d?'<p><b>Dato og tid:</b> '+esc(d)+'</p>':'')+(nt?'<p><b>Praktisk:</b> '+esc(nt).replace(/\n/g,'<br>')+'</p>':'');
     var w=window.open('','_blank'); if(!w) return toast('Nettlesaren blokkerte vindauget. Tillat popup og prøv att.');
-    w.document.write('<!doctype html><meta charset="utf-8"><title>Shotliste '+esc(o.adresse||'')+'</title><style>body{font:14px system-ui,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0}table{border-collapse:collapse;width:100%;margin-top:12px}th{text-align:left;background:#eee;padding:6px}td{border-bottom:1px solid #ccc;padding:6px;vertical-align:top}td:first-child{width:28px}p{margin:4px 0}.m{color:#555;margin:4px 0 12px}</style><h1>'+esc(o.adresse||'Shotliste')+'</h1><div class="m">'+esc(o.kunde||'')+(d?' · '+esc(d):'')+'</div>'+b+'<table>'+body+'</table>');
+    w.document.write('<!doctype html><meta charset="utf-8"><title>Opptaksplan '+esc(o.adresse||'')+'</title><style>body{font:14px system-ui,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0}table{border-collapse:collapse;width:100%;margin-top:12px}th{text-align:left;background:#eee;padding:6px}td{border-bottom:1px solid #ccc;padding:6px;vertical-align:top}td:first-child{width:28px}p{margin:4px 0}.m{color:#555;margin:4px 0 12px}</style><h1>Opptaksplan: '+esc(o.adresse||'')+'</h1><div class="m">'+esc(o.kunde||'')+'</div>'+pr+b+'<h2 style="font-size:16px;margin:16px 0 0">Shotliste</h2><table>'+body+'</table>');
     w.document.close(); w.focus(); setTimeout(function(){ w.print(); },300); }
   function shotSum(){ var e=$('pp-sum'); if(!e) return; var a=shotRead(), t=a.reduce(function(n,x){return n+(x.lengd_sek||0)},0), f=a.filter(function(x){return x.ferdig}).length;
     e.textContent=a.length?(a.length+' shots'+(t?' · '+t+' sek':'')+' · '+f+' filma'):'berre du ser dette'; }

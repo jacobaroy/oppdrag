@@ -794,7 +794,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-ksave>Lagre</button><button class="btn" type="button" data-kclose>Lukk</button>'+
       (!isNew?'<button class="btn" type="button" data-knewjob="'+esc(r.namn)+'">+ Nytt oppdrag</button>':'')+'</div>'+
       (isNew?'':'<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><div><button class="btn" type="button" data-karkiver="'+esc(r.id)+'" data-ark="'+(i.arkivert?'0':'1')+'">'+(i.arkivert?'Hent fram att':'Arkiver kunden')+'</button>'+
-        '<div class="hint" style="margin-top:4px">'+(i.arkivert?'Kunden er arkivert: skjult frå lista og frå Pre-prod. Oppdrag og økonomi ligg trygt.':'Skjuler kunden frå lista og frå Pre-prod. Oppdrag og økonomi ligg trygt.')+'</div></div>'+
+        '</div>'+
         '<details><summary class="hint" style="cursor:pointer">Slett kunden for godt</summary>'+(jobs.length?'<div class="hint" style="margin-top:6px">Kunden har '+jobs.length+' oppdrag og kan berre arkiverast.</div>':
           '<div class="hint" style="margin:6px 0">Kan ikkje angrast. Skriv kundenamnet for å stadfeste.</div><input id="k-slett" type="text" placeholder="'+esc(r.namn)+'" autocomplete="off"> <button class="btn" type="button" data-kslett="'+esc(r.id)+'">Slett for godt</button>')+'</details></div>')+
       '</div>'+
@@ -819,7 +819,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     var namn = id ? ((KUNDAR[id]||{}).namn || (kundeList().find(function(r){return r.id===id})||{}).namn || id) : v('namn');
     if(!namn){ $('k-namn').focus(); return; }
     var nid = id || kslug(namn);
-    try{ await run(sb.from('kundar').upsert({id:nid,namn:namn,kontakt:v('kontakt'),epost:v('epost'),tlf:v('tlf'),notat:v('notat')}));
+    var rad={id:nid,namn:namn,kontakt:v('kontakt'),epost:v('epost'),tlf:v('tlf'),notat:v('notat')}; if(!id) rad.arkivert=false; // ny kunde med same namn som ein arkivert = tilbake i bruk
+    try{ await run(sb.from('kundar').upsert(rad));
       KUNDAR[nid]={id:nid,namn:namn,kontakt:v('kontakt'),epost:v('epost'),tlf:v('tlf'),notat:v('notat')}; newK=false; openK=nid; renderKundar(); toast('Kunden er lagra'); }
     catch(err){ toast(writeErr(err)); }
   }

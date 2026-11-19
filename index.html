@@ -477,7 +477,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   </section>
   <section class="panel" id="kundePanel" hidden>
     <div class="ph"><h2>Kundar<span class="sub" id="kCount"></span></h2>
-      <div class="filters"><input id="kSearch" class="ksearch" type="search" placeholder="Søk etter kunde" autocomplete="off"><button class="btn" type="button" data-knew>+ Ny kunde</button></div></div>
+      <div class="filters"><input id="kSearch" class="ksearch" type="search" placeholder="Søk etter kunde" autocomplete="off"><button class="btn" type="button" id="kArkBtn" data-karkivvis>Arkiverte</button><button class="btn" type="button" data-knew>+ Ny kunde</button></div></div>
     <div style="overflow-x:auto"><table class="tbl ktbl" id="kTbl"></table></div>
   </section>
   <section class="panel" id="listPanel">
@@ -757,7 +757,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     $('who').hidden=o;
   }
   // ---- kundearkiv (berre eigar) ----
-  var KUNDAR={}, openK=null, newK=false, kQ='';
+  var KUNDAR={}, openK=null, newK=false, kQ='', kArk=false;
   function kslug(n){ return String(n||'').trim().toLowerCase().replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,120)||'utan-namn'; }
   function kundeList(){
     var M={};
@@ -766,7 +766,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       var r=M[id]||(M[id]={id:id,namn:n,info:{},jobs:[],oms:0,sist:'',forst:''});
       r.jobs.push(it); if(it.o.status!=='tilbod') r.oms+=+it.o.pris||0;
       var d=it.o.dato||''; if(d&&d>r.sist) r.sist=d; if(d&&(!r.forst||d<r.forst)) r.forst=d; });
-    return Object.keys(M).map(function(k){return M[k]}); }
+    return Object.keys(M).map(function(k){return M[k]}).filter(function(r){ return !!(KUNDAR[r.id]&&KUNDAR[r.id].arkivert)===kArk; }); }
   function longDate(d){ if(!d) return '–'; var p=d.split('-'); return (+p[2])+'. '+MNDK[+p[1]-1]+' '+p[0]; }
   function renderKundar(){
     var L=kundeList(), q=kQ.trim().toLowerCase();
@@ -775,7 +775,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     $('kCount').textContent=L.length?String(L.length):'';
     var h='<thead><tr><th>Kunde</th><th class="r">Oppdrag</th><th class="hm">Sist</th><th class="r">Omsetning</th></tr></thead><tbody>';
     if(newK) h+='<tr class="kdet"><td colspan="4">'+kForm({id:'',namn:'',info:{},jobs:[]},true)+'</td></tr>';
-    if(!L.length&&!newK) h+='<tr><td colspan="4" class="empty">'+(q?'Ingen kundar passar søket.':'Ingen kundar enno. Dei dukkar opp her når du legg inn oppdrag med kunde.')+'</td></tr>';
+    if(!L.length&&!newK) h+='<tr><td colspan="4" class="empty">'+(q?'Ingen kundar passar søket.':(kArk?'Ingen arkiverte kundar.':'Ingen kundar enno. Dei dukkar opp her når du legg inn oppdrag med kunde.'))+'</td></tr>';
     L.forEach(function(r){ var i=r.info||{}, op=openK===r.id;
       h+='<tr class="krow'+(op?' open':'')+'" data-kopen="'+esc(r.id)+'"><td class="addr"><b>'+esc(r.namn)+'</b><span>'+esc([i.kontakt,i.tlf||i.epost].filter(Boolean).join(' · '))+'</span></td>'+
         '<td class="r num">'+r.jobs.length+'</td><td class="hm num">'+esc(longDate(r.sist))+'</td><td class="r num">'+kr(r.oms)+'</td></tr>';
@@ -792,9 +792,26 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       f('kontakt','Kontaktperson',i.kontakt)+'<div class="two">'+f('epost','E-post',i.epost,'email')+f('tlf','Telefon',i.tlf,'tel')+'</div>'+
       '<label class="fld"><span>Notat</span><textarea id="k-notat" placeholder="Til dømes kva dei likar, faste prisar, faktura-adresse">'+esc(i.notat||'')+'</textarea></label>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-ksave>Lagre</button><button class="btn" type="button" data-kclose>Lukk</button>'+
-      (!isNew?'<button class="btn" type="button" data-knewjob="'+esc(r.namn)+'">+ Nytt oppdrag</button>':'')+'</div></div>'+
+      (!isNew?'<button class="btn" type="button" data-knewjob="'+esc(r.namn)+'">+ Nytt oppdrag</button>':'')+'</div>'+
+      (isNew?'':'<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><div><button class="btn" type="button" data-karkiver="'+esc(r.id)+'" data-ark="'+(i.arkivert?'0':'1')+'">'+(i.arkivert?'Hent fram att':'Arkiver kunden')+'</button>'+
+        '<div class="hint" style="margin-top:4px">'+(i.arkivert?'Kunden er arkivert: skjult frå lista og frå Pre-prod. Oppdrag og økonomi ligg trygt.':'Skjuler kunden frå lista og frå Pre-prod. Oppdrag og økonomi ligg trygt.')+'</div></div>'+
+        '<details><summary class="hint" style="cursor:pointer">Slett kunden for godt</summary>'+(jobs.length?'<div class="hint" style="margin-top:6px">Kunden har '+jobs.length+' oppdrag og kan berre arkiverast.</div>':
+          '<div class="hint" style="margin:6px 0">Kan ikkje angrast. Skriv kundenamnet for å stadfeste.</div><input id="k-slett" type="text" placeholder="'+esc(r.namn)+'" autocomplete="off"> <button class="btn" type="button" data-kslett="'+esc(r.id)+'">Slett for godt</button>')+'</details></div>')+
+      '</div>'+
       (isNew?'':'<div><div class="tag" style="margin-bottom:6px">Oppdrag ('+jobs.length+')</div><ul class="kjobs">'+(jobs.length?jobs.map(function(it){var o=it.o;return '<li data-open="'+esc(it.key)+'"><span class="d">'+esc(longDate(o.dato))+'</span><i class="dot" style="--c:'+sc(o.status)+'"></i><b>'+esc(o.adresse||'Utan tittel')+'</b><span class="tag">'+(hasNum(o.pris)?kr(o.pris):'')+'</span></li>'}).join(''):'<li style="cursor:default" class="tag">Ingen oppdrag enno.</li>')+'</ul></div>')+
       '</div>';
+  }
+  async function kArkiver(id,ark){
+    var namn=(KUNDAR[id]||{}).namn||(kundeList().find(function(r){return r.id===id})||{}).namn||id;
+    try{ await run(sb.from('kundar').upsert({id:id,namn:namn,arkivert:ark},{onConflict:'id'}));
+      KUNDAR[id]=Object.assign({kontakt:'',epost:'',tlf:'',notat:''},KUNDAR[id],{id:id,namn:namn,arkivert:ark}); openK=null; renderKundar(); toast(ark?'Kunden er arkivert':'Kunden er henta fram'); }
+    catch(err){ toast(writeErr(err)); }
+  }
+  async function kSlett(id){
+    var namn=(KUNDAR[id]||{}).namn||id, inp=$('k-slett');
+    if(!inp||inp.value.trim().toLowerCase()!==namn.trim().toLowerCase()){ toast('Skriv kundenamnet for å slette'); if(inp) inp.focus(); return; }
+    try{ await run(sb.from('kundar').delete().eq('id',id)); delete KUNDAR[id]; openK=null; renderKundar(); toast('Kunden er sletta'); }
+    catch(err){ toast(String(err&&err.message||'').indexOf('oppdrag')>=0?'Kunden har oppdrag og kan berre arkiverast':writeErr(err)); }
   }
   async function kSave(){
     var box=document.querySelector('.kform'); if(!box) return;
@@ -1352,6 +1369,9 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       var id=it?it.key:null;
       if(it) await run(sb.from('oppdrag').update(row).eq('id',id)); else { if(kalF) row.kalender_hending=kalF; var ins=await run(sb.from('oppdrag').insert(row).select('id').single()); id=ins.data.id;
         if(kalF){ await sb.from('kalender_forslag').update({status:'registrert',oppdrag_id:id}).eq('id',kalF); KALF=KALF.filter(function(f){return f.id!==kalF}); } }
+      // Ny kunde berre med namn: lagar kunderaden (rører aldri ein kunde som finst), så han dukkar opp i Pre-prod
+      if(row.kunde&&isOwner&&KUNDAR[kslug(row.kunde)]&&KUNDAR[kslug(row.kunde)].arkivert){ var kua=kslug(row.kunde); var kr1=await sb.from('kundar').update({arkivert:false}).eq('id',kua); if(!kr1.error) KUNDAR[kua].arkivert=false; }
+      if(row.kunde&&isOwner&&!KUNDAR[kslug(row.kunde)]){ var kid=kslug(row.kunde); var kr0=await sb.from('kundar').upsert({id:kid,namn:row.kunde},{onConflict:'id',ignoreDuplicates:true}); if(!kr0.error) KUNDAR[kid]={id:kid,namn:row.kunde,kontakt:'',epost:'',tlf:'',notat:''}; }
       if(priceIn!==''||hasNum(PRIS[id])) await run(sb.from('oppdrag_pris').upsert({oppdrag_id:id,kundepris:+priceIn||0}));
       if(honIn!==''||hasNum(HON[id])) await run(sb.from('oppdrag_honorar').upsert({oppdrag_id:id,belop:+honIn||0}));
       if(row.utlyst&&it&&!it.o.utlyst) await sb.from('avslag').delete().eq('oppdrag_id',id);
@@ -1386,6 +1406,9 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if((b=t.closest('[data-iclose]'))){ closeInfo(); return; }
     if((b=t.closest('[data-backup]'))){ backup(b.getAttribute('data-backup')).catch(function(){ toast('Klarte ikkje lage reservekopi.'); }); return; }
     if((b=t.closest('[data-ksave]'))){ kSave(); return; }
+    if((b=t.closest('[data-karkivvis]'))){ kArk=!kArk; openK=null; newK=false; b.classList.toggle('primary',kArk); renderKundar(); return; }
+    if((b=t.closest('[data-karkiver]'))){ kArkiver(b.getAttribute('data-karkiver'),b.getAttribute('data-ark')==='1'); return; }
+    if((b=t.closest('[data-kslett]'))){ kSlett(b.getAttribute('data-kslett')); return; }
     if((b=t.closest('[data-kclose]'))){ openK=null; newK=false; renderKundar(); return; }
     if((b=t.closest('[data-knew]'))){ newK=true; openK=null; renderKundar(); setTimeout(function(){ $('k-namn')&&$('k-namn').focus(); },20); return; }
     if((b=t.closest('[data-knewjob]'))){ openDrawer(null,{kunde:b.getAttribute('data-knewjob')}); return; }

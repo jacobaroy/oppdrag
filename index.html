@@ -617,7 +617,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
 
   var sb=null, me=null, myEmail='', isOwner=false, profile=null;
   var rows=[], blocks=[], allProfiles=[], invites=[], photogs={}, capOff=0, mode='job', warnOK=false;
-  var PRIS={}, HON={}, AVSLAG=[], KALF=[], AVTALE=null, GODKJ=[], kalF=null, offers=[], MVA=0.25, OV='idag';
+  var SV={}, SEEN={}, PRIS={}, HON={}, AVSLAG=[], KALF=[], AVTALE=null, GODKJ=[], kalF=null, offers=[], MVA=0.25, OV='idag';
   try{ OV=localStorage.getItem('aroy-side')||'idag'; }catch(e){}
   var MEG='Aroy Film';   // eigne oppdrag (Aroy Film) blir lagra med dette namnet og ligg berre hos deg
   // Fakturainfo til partnarane. Standardverdiar; Jacob endrar dei under Brukarar (tabellen innstillingar).
@@ -652,7 +652,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       var dg=Array.isArray(r.dagar)?r.dagar:[];
       var p=r.fotograf_id?(photogs[r.fotograf_id]||{}):{};
       var o={adresse:r.tittel,kunde:r.kunde,type:r.kategori,kategori:r.kategori,omrade:r.omrade||p.omrade||'',dagar:dg,dato:r.dato||'',tid:(dg[0]||{}).tid||'',
-        status:(r.retting&&r.status==='levert')?'retting':r.status,dato_ventar:!!r.dato_ventar,lenke:r.lenke,notat:r.notat,pris:PRIS[r.id],honorar:HON[r.id],utlyst:!!r.utlyst&&!r.fotograf_id,utlyst_til:r.utlyst_til,utlyst_omrade:r.utlyst_omrade,
+        status:(r.retting&&r.status==='levert')?'retting':r.status,dato_ventar:!!r.dato_ventar,svar_ventar:!!r.svar_ventar,svar_tid:r.svar_tid||'',lenke:r.lenke,notat:r.notat,pris:PRIS[r.id],honorar:HON[r.id],utlyst:!!r.utlyst&&!r.fotograf_id,utlyst_til:r.utlyst_til,utlyst_omrade:r.utlyst_omrade,
         fotograf:(r.utlyst&&!r.fotograf_id)?(r.utlyst_til?'Spør '+((photogs[r.utlyst_til]||{}).namn||'fotograf'):'Utlyst i '+(r.utlyst_omrade||'området')):r.fotograf_id?(p.namn||(r.fotograf_id===me&&profile?profile.namn:'')||'Fotograf'):r.fotograf_namn};
       if(!isOwner&&profile){ o.fotograf=profile.namn; o.omrade=o.omrade||profile.omrade; }
       return {key:r.id, path:r.id, uid:r.fotograf_id||null, o:o};
@@ -674,6 +674,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     // Alle tabellane blir henta samtidig, ikkje éin etter éin.
     var q=[sb.from('oppdrag').select('*'), sb.from('opptatt').select('*'), sb.from('oppdrag_honorar').select('*'), sb.from('innstillingar').select('*').eq('id','faktura').maybeSingle()];
     if(isOwner) q.push(sb.from('profiles').select('*').order('namn'), sb.from('invitasjonar').select('*').order('namn'), sb.from('oppdrag_pris').select('*'), sb.from('avslag').select('*'), sb.from('kundar').select('*'), sb.from('kalender_forslag').select('*').eq('status','ny').order('dato'), sb.from('avtale_godkjent').select('*').order('godkjent',{ascending:false}), sb.from('preprod_brief').select('*'), sb.from('preprod_shot').select('*').order('rekkefolge'));
+    if(isOwner) q.push(sb.rpc('svar_status',{}));   // sendt/sett/purringar per jobb (indeks 13)
     q.push(sb.from('avtale').select('*').order('versjon',{ascending:false}).limit(1).maybeSingle());   // siste partnaravtale
     var r=await Promise.all(q), r1=r[0];
     if(r1.error){ msg('Klarte ikkje hente oppdrag. Last sida på nytt.'); return; }
@@ -686,6 +687,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       PRIS={}; (r[6].data||[]).forEach(function(x){ PRIS[x.oppdrag_id]=+x.kundepris; });
       AVSLAG=r[7].data||[];
       KUNDAR={}; (r[8].data||[]).forEach(function(k){ KUNDAR[k.id]=k; });
+      SV={}; ((r[13]&&Array.isArray(r[13].data)&&r[13].data)||[]).forEach(function(x){ SV[x.id]=x; });
       KALF=(r[9]&&r[9].data)||[];   // nye hendingar frå Google Kalender
       GODKJ=(r[10]&&r[10].data)||[];
       SHOT={}; ((r[12]&&r[12].data)||[]).forEach(function(x){ (SHOT[x.oppdrag_id]=SHOT[x.oppdrag_id]||[]).push(x); });
@@ -767,6 +769,16 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       r.jobs.push(it); if(it.o.status!=='tilbod') r.oms+=+it.o.pris||0;
       var d=it.o.dato||''; if(d&&d>r.sist) r.sist=d; if(d&&(!r.forst||d<r.forst)) r.forst=d; });
     return Object.keys(M).map(function(k){return M[k]}).filter(function(r){ return !!(KUNDAR[r.id]&&KUNDAR[r.id].arkivert)===kArk; }); }
+  function fmtDT(t){ var d=new Date(t); return isNaN(d)?'':d.getDate()+'. '+MNDK[d.getMonth()]+' kl. '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  // Svar frå fotografen (eigar): sendt, sett, svart. Berre når jobben er tildelt direkte eller spurd til éin person.
+  function svarInfo(it){ var o=it.o, pid=o.utlyst_til||it.uid, s=SV[it.key]||{}; if(!pid||!(o.svar_ventar||o.svar_tid||(o.utlyst&&o.utlyst_til))) return null;
+    var sett=(s.sett||[]).filter(function(p){return p.profil===pid})[0], nei=AVSLAG.some(function(a){return a.oppdrag_id===it.key&&a.fotograf_id===pid});
+    return {namn:(photogs[pid]||{}).namn||'Fotografen', sendt:s.sendt, sett:sett&&sett.sett, purr:+s.purringar||0, ja:o.svar_tid&&!o.svar_ventar, nei:nei, ventar:!nei&&(o.svar_ventar||(o.utlyst&&!!o.utlyst_til))}; }
+  function svarTekst(it){ var v=svarInfo(it); return v&&v.ventar?v.namn+' har ikkje svart ('+(v.sett?'har sett jobben':'ikkje sett enno')+')':''; }
+  function svarBlokk(it){ var v=it&&svarInfo(it); if(!v) return '';
+    return '<div class="fbox"><b>Svar frå '+esc(v.namn)+'</b><div class="hint" style="line-height:1.7">'+
+      (v.sendt?'Mail sendt '+esc(fmtDT(v.sendt)):'Mail ikkje sendt enno')+'<br>'+(v.sett?'Sett '+esc(fmtDT(v.sett)):'Ikkje sett enno')+'<br>'+
+      (v.nei?'Sa nei':v.ja?'Svart ja '+esc(fmtDT(it.o.svar_tid)):'<b style="color:var(--text-warning,#a60)">Ikkje svart</b>'+(v.purr?' · '+v.purr+(v.purr>1?' påminningar':' påminning')+' sendt':'')+'</div>')+'</div></div>'; }
   function longDate(d){ if(!d) return '–'; var p=d.split('-'); return (+p[2])+'. '+MNDK[+p[1]-1]+' '+p[0]; }
   function renderKundar(){
     var L=kundeList(), q=kQ.trim().toLowerCase();
@@ -876,6 +888,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     view.forEach(function(it){ var o=it.o, why='';
       if(isOwner){
         if(o.dato_ventar) why='Ventar på svar om ny dato';
+        else if(svarTekst(it)) why=svarTekst(it);
         else if(o.status==='booka'&&!days(o).length&&(it.uid||o.fotograf)) why='Manglar dato';
         else if(o.status==='levert') why='Sjå over videoen';
         else if(o.status==='retting') why='Rettingar frå kunden';
@@ -950,17 +963,26 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
   function renderOffers(){
     var pnl=$('offerPanel'); if(!pnl) return;
     var dq=isOwner?[]:items.filter(function(it){return it.o.dato_ventar});
-    if(isOwner||(!offers.length&&!dq.length)){ pnl.hidden=true; return; }
+    var sq=isOwner?[]:items.filter(function(it){return it.o.svar_ventar});
+    if(isOwner||(!offers.length&&!dq.length&&!sq.length)){ pnl.hidden=true; return; }
+    sq.map(function(it){return it.key}).concat(offers.map(function(r){return r.id})).forEach(markSett);
     pnl.hidden=false;
-    $('offerCount').textContent=String(offers.length+dq.length);
-    $('offerTitle').textContent=dq.length?'Treng svar':'Nye oppdrag';
+    $('offerCount').textContent=String(offers.length+dq.length+sq.length);
+    $('offerTitle').textContent=(dq.length||sq.length)?'Treng svar':'Nye oppdrag';
     // Ny dato på ein jobb partnaren alt har: han svarar om det passar.
     var dh=dq.map(function(it){ var o=it.o, dg=days(o), c=conflicts(dg.map(function(d){return d.dato}),me,'',it.key);
       return '<div class="offer"><div class="offer-h"><div><b>Ny dato: '+esc(o.adresse||'Oppdrag')+'</b><span>'+esc([o.kunde,o.type,o.omrade].filter(Boolean).join(' · '))+'</span></div></div>'+
         '<div class="tag" style="font-size:15px;color:var(--ink)">'+dg.map(function(d){return esc(shortDate(d.dato)+(d.tid?' kl. '+d.tid:''))}).join(' · ')+'</div>'+
         (c.length?'<div class="warn"><b>Du har noko desse dagane:</b><br>'+c.map(esc).join('<br>')+'</div>':'')+
         '<div class="offer-a"><button class="btn primary" type="button" data-dok="'+esc(it.key)+'">Det passar</button><button class="btn" type="button" data-dnei="'+esc(it.key)+'">Kan ikkje</button></div></div>'; }).join('');
-    $('offers').innerHTML=dh+offers.map(function(r){
+    var sh=sq.map(function(it){ var o=it.o, dg=days(o), c=conflicts(dg.map(function(d){return d.dato}),me,'',it.key);
+      return '<div class="offer"><div class="offer-h"><div><b>Kan du ta jobben? '+esc(o.adresse||'Oppdrag')+'</b><span>'+esc([o.kunde,o.type,o.omrade].filter(Boolean).join(' · '))+'</span></div>'+
+        '<div class="offer-pay"><span>Honorar</span><b>'+esc(hasNum(o.honorar)?kr(o.honorar):'Ikkje sett')+'</b>'+(hasNum(o.honorar)&&myMva()?'<span>+ mva = '+kr(inkl(o.honorar))+'</span>':'')+'</div></div>'+
+        '<div class="tag" style="font-size:15px;color:var(--ink)">'+(dg.length?dg.map(function(d){return esc(shortDate(d.dato)+(d.tid?' kl. '+d.tid:''))}).join(' · '):'Dato ikkje sett')+'</div>'+
+        (o.notat?'<div class="tag" style="white-space:pre-wrap">'+esc(o.notat)+'</div>':'')+
+        (c.length?'<div class="warn"><b>Du har noko desse dagane:</b><br>'+c.map(esc).join('<br>')+'</div>':'')+
+        '<div class="offer-a"><button class="btn primary" type="button" data-sok="'+esc(it.key)+'">Eg tek jobben</button><button class="btn" type="button" data-snei="'+esc(it.key)+'">Kan ikkje</button></div></div>'; }).join('');
+    $('offers').innerHTML=sh+dh+offers.map(function(r){
       var dg=Array.isArray(r.dagar)?r.dagar:[], dates=dg.map(function(d){return d.dato});
       var c=conflicts(dates,me,'',null);
       return '<div class="offer">'+
@@ -972,6 +994,14 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
         '<div class="offer-a"><button class="btn primary" type="button" data-take="'+r.id+'">Ta jobben</button><button class="btn" type="button" data-decline="'+r.id+'">Avslå</button></div>'+
       '</div>';
     }).join('');
+  }
+  function markSett(id){ if(SEEN[id]) return; SEEN[id]=1; sb.rpc('sett_jobb',{p_id:id}).then(function(){},function(){}); }   // fortel Jacob at partnaren har sett jobben
+  async function jobbSvar(b,ok){
+    var id=b.getAttribute(ok?'data-sok':'data-snei'), card=b.closest('.offer');
+    [].forEach.call(card.querySelectorAll('button'),function(x){x.disabled=true;}); card.classList.add('gone');
+    try{ var r=await run(sb.rpc('svar_jobb',{p_id:id,p_ja:ok})); if(!r.data) throw new Error('ikkje svart');
+      toast(ok?'Takk! Jobben er din':'Takk for beskjed. Jobben er send vidare.'); reload(); }
+    catch(err){ card.classList.remove('gone'); [].forEach.call(card.querySelectorAll('button'),function(x){x.disabled=false;}); toast('Klarte ikkje sende svaret. Prøv igjen.'); }
   }
   async function datoSvar(b,ok){
     var id=b.getAttribute(ok?'data-dok':'data-dnei'), card=b.closest('.offer');
@@ -1166,7 +1196,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     return c; }
   // Partnaren ser jobben, men kan ikkje endre han. Levering skjer med éin knapp.
   function openJob(key){
-    var it=find(key); if(!it) return; var o=it.o; mode='view'; editKey=key;
+    var it=find(key); if(!it) return; var o=it.o; mode='view'; editKey=key; markSett(key);
     var kv=function(k,v){ return v?'<dt>'+esc(k)+'</dt><dd>'+v+'</dd>':''; };
     var dg=days(o).map(function(d){ return esc(shortDate(d.dato)+(d.tid?' kl. '+d.tid:'')); }).join('<br>');
     $('dtitle').textContent=o.adresse||'Oppdrag';
@@ -1232,6 +1262,7 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
       '<div class="hint" id="f-sum"></div></div>';
     var st=STATUSES.slice(); if(!st.some(function(x){return x.k===o.status})&&SL[o.status]) st=st.concat([SL[o.status]]);
     $('dbody').innerHTML=
+      svarBlokk(it)+
       '<label class="fld big"><span>Tittel</span><input id="f-adresse" required placeholder="Tittel på oppdrag" value="'+esc(o.adresse)+'" autocomplete="off"></label>'+
       '<label class="fld"><span>Kunde</span><input id="f-kunde" list="dl-kunde" placeholder="Vel eller skriv ny kunde" value="'+esc(o.kunde)+'" autocomplete="off">'+dl('dl-kunde',uniq('kunde'))+'</label>'+
       '<div class="fld"><span>Område</span>'+segHTML('omrade',AREAS,o.omrade)+'</div>'+
@@ -1434,6 +1465,8 @@ details.fold[open] .chev{transform:rotate(-135deg);margin-top:4px}
     if((b=t.closest('[data-kreg]'))){ var kf=KALF.find(function(f){return f.id===b.getAttribute('data-kreg')}); if(kf) openDrawer(null,kalGjett(kf)); return; }
     if((b=t.closest('[data-kign]'))){ kalIgnorer(b); return; }
     if((b=t.closest('[data-quick]'))){ quick(b); return; }
+    if((b=t.closest('[data-sok]'))){ if(!b.disabled) jobbSvar(b,true); return; }
+    if((b=t.closest('[data-snei]'))){ if(!b.disabled) jobbSvar(b,false); return; }
     if((b=t.closest('[data-dok]'))){ if(!b.disabled) datoSvar(b,true); return; }
     if((b=t.closest('[data-dnei]'))){ if(!b.disabled) datoSvar(b,false); return; }
     if((b=t.closest('[data-take]'))){ if(b.disabled) return; b.disabled=true; b.textContent='Tek jobben…'; offerAction(b.getAttribute('data-take'),true); return; }
